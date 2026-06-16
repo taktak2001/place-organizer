@@ -46,11 +46,11 @@ export default async function CategoryPage({ params, searchParams }: { params: {
 
       {error ? <pre className="whitespace-pre-wrap rounded-lg border border-clay bg-white p-4 text-sm text-stone-700">{error}</pre> : null}
 
-      <form className="rounded-lg border border-stone-300 bg-white p-4">
+      <form className="rounded-lg border border-line bg-white p-4">
         <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
           <label>
             <span className="text-xs font-medium uppercase text-stone-600">検索</span>
-            <div className="mt-1 flex items-center gap-2 rounded-md border border-stone-300 px-3">
+            <div className="mt-1 flex items-center gap-2 rounded-md border border-line px-3">
               <Search className="h-4 w-4 text-stone-500" />
               <input name="search" defaultValue={filters.search} className="h-12 w-full bg-transparent outline-none md:h-10" placeholder="場所名で検索" />
             </div>
@@ -58,7 +58,7 @@ export default async function CategoryPage({ params, searchParams }: { params: {
           <Link
             href={wantToggleHref}
             aria-pressed={filters.want}
-            className={`flex h-12 items-center justify-center gap-2 self-end rounded-md border px-3 text-sm font-semibold transition active:scale-[0.99] md:h-10 ${filters.want ? "border-moss bg-moss text-white" : "border-stone-300 bg-paper text-ink hover:border-moss"}`}
+            className={`flex h-12 items-center justify-center gap-2 self-end rounded-md border px-3 text-sm font-semibold transition active:scale-[0.99] md:h-10 ${filters.want ? "border-moss bg-moss text-white" : "border-line bg-paper text-ink hover:border-moss"}`}
           >
             <span aria-hidden="true">{filters.want ? "✓" : "□"}</span>
             行ってみたい
@@ -66,7 +66,7 @@ export default async function CategoryPage({ params, searchParams }: { params: {
           <button className="h-12 self-end rounded-md bg-ink px-5 text-sm font-semibold text-white md:h-10">適用</button>
         </div>
 
-        <details className="mt-3 rounded-md border border-stone-200 bg-paper p-3">
+        <details className="mt-3 rounded-md border border-line bg-paper p-3">
           <summary className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-ink">
             <SlidersHorizontal className="h-4 w-4" />
             詳細フィルタ
@@ -74,17 +74,17 @@ export default async function CategoryPage({ params, searchParams }: { params: {
           <div className="mt-3 grid gap-3 md:grid-cols-4">
             {category === "Restaurant" ? <CheckboxGroup name="category_tags" label="料理ジャンル" values={[...RESTAURANT_CUISINE_TAGS]} selected={filters.category_tags} labeler={jaCategoryTag} tone="cuisine" /> : null}
             {category === "Restaurant" ? <CheckboxGroup name="scene_tags" label="利用シーン" values={SCENE_TAGS} selected={filters.scene_tags} labeler={jaSceneTag} tone="scene" /> : null}
-            {category === "Restaurant" ? <SelectFilter name="price_level" label="価格帯" value={filters.price_level} options={["1", "2", "3", "4"]} labeler={priceLevelLabel} /> : null}
             {category === "Art" ? <CheckboxGroup name="sub_category" label="サブカテゴリ" values={ART_SUB_CATEGORIES} selected={filters.sub_category} labeler={jaDisplay} /> : null}
             {category === "Fashion" ? <CheckboxGroup name="category_tags" label="ジャンル" values={FASHION_TAGS} selected={filters.category_tags} labeler={jaCategoryTag} /> : null}
             {category === "Cafe" ? <CheckboxGroup name="category_tags" label="タグ" values={CAFE_TAGS} selected={filters.category_tags} labeler={jaCategoryTag} /> : null}
             <RegionChipGroup selected={filters.region_filter_label} availableLabels={availableRegionLabels} />
+            {category === "Restaurant" ? <SelectFilter name="price_level" label="価格帯" value={filters.price_level} options={["1", "2", "3", "4"]} labeler={priceLevelLabel} /> : null}
           </div>
         </details>
       </form>
 
       {category === "Restaurant" ? (
-        <section className="rounded-lg border border-stone-300 bg-white p-4">
+        <section className="rounded-lg border border-line bg-white p-4">
           <h2 className="text-sm font-semibold text-ink">料理ジャンル別件数</h2>
           <div className="mt-3 flex flex-wrap gap-2">
             {Object.entries(cuisineCounts).length > 0 ? Object.entries(cuisineCounts).slice(0, 12).map(([tag, count]) => (
@@ -96,13 +96,13 @@ export default async function CategoryPage({ params, searchParams }: { params: {
         </section>
       ) : null}
 
-      <div className="rounded-lg border border-stone-300 bg-white p-4 text-sm text-stone-700">
+      <div className="rounded-lg border border-line bg-white p-4 text-sm text-stone-700">
         絞り込み結果: <span className="font-semibold text-ink">{filtered.length}</span>件
       </div>
 
       <div className="grid gap-3">
         {visiblePlaces.map((place) => <PlaceBrowseCard key={String(place.id)} place={place} mode="category" />)}
-        {visiblePlaces.length === 0 ? <div className="rounded-lg border border-stone-300 bg-white p-6 text-sm text-stone-600">場所が見つかりません</div> : null}
+        {visiblePlaces.length === 0 ? <div className="rounded-lg border border-line bg-white p-6 text-sm text-stone-600">場所が見つかりません</div> : null}
       </div>
 
       <Pagination page={page} totalPages={totalPages} filters={filters} slug={params.slug} />
@@ -126,7 +126,7 @@ function CheckboxGroup({ name, label, values, selected, labeler, tone = "default
   return (
     <fieldset className="md:col-span-2">
       <legend className="text-xs font-medium uppercase text-stone-600">{label}</legend>
-      <div className="mt-1 flex min-h-10 flex-wrap gap-2 rounded-md border border-stone-300 bg-white px-2 py-2">
+      <div className="mt-1 flex min-h-10 flex-wrap gap-2 rounded-md border border-line bg-white px-2 py-2">
         {values.map((value) => (
           <label key={value} className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs ${checkboxToneClass(tone, selected.includes(value))}`}>
             <input type="checkbox" name={name} value={value} defaultChecked={selected.includes(value)} />
@@ -142,7 +142,7 @@ function RegionChipGroup({ selected, availableLabels }: { selected: string[]; av
   return (
     <fieldset className="md:col-span-4">
       <legend className="text-xs font-medium uppercase text-stone-600">地域</legend>
-      <div className="mt-1 space-y-3 rounded-md border border-stone-300 bg-white p-3">
+      <div className="mt-1 space-y-3 rounded-md border border-line bg-white p-3">
         {REGION_FILTER_SECTIONS.map((section) => {
           const labels = section.labels.filter((label) => availableLabels.has(label) || selected.includes(label));
           if (labels.length === 0) return null;
@@ -153,7 +153,7 @@ function RegionChipGroup({ selected, availableLabels }: { selected: string[]; av
                 {labels.map((label) => {
                   const active = selected.includes(label);
                   return (
-                    <label key={label} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs transition ${active ? "border-moss bg-moss text-white" : "border-stone-300 bg-white text-stone-800 hover:border-moss"}`}>
+                    <label key={label} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs transition ${active ? "border-moss bg-moss text-white" : "border-line bg-white text-stone-800 hover:border-moss"}`}>
                       <input className="sr-only" type="checkbox" name="region_filter_label" value={label} defaultChecked={active} />
                       {label}
                     </label>
@@ -169,8 +169,8 @@ function RegionChipGroup({ selected, availableLabels }: { selected: string[]; av
 }
 
 function checkboxToneClass(tone: "default" | "cuisine" | "scene", selected: boolean) {
-  if (tone === "scene") return selected ? "bg-moss text-white" : "bg-moss/10 text-moss";
-  if (tone === "cuisine") return selected ? "bg-clay text-white" : "bg-paper text-stone-800";
+  if (tone === "scene") return selected ? "bg-moss text-white" : "bg-accentSoft text-ink";
+  if (tone === "cuisine") return selected ? "border border-moss bg-white text-ink" : "border border-line bg-white text-ink";
   return selected ? "bg-ink text-white" : "bg-paper text-stone-800";
 }
 
@@ -178,7 +178,7 @@ function SelectFilter({ name, label, value, options, labeler }: { name: string; 
   return (
     <label>
       <span className="text-xs font-medium uppercase text-stone-600">{label}</span>
-      <select name={name} defaultValue={value} className="mt-1 h-10 w-full rounded-md border border-stone-300 bg-white px-3">
+      <select name={name} defaultValue={value} className="mt-1 h-10 w-full rounded-md border border-line bg-white px-3">
         <option value="">すべて</option>
         {options.map((option) => (
           <option key={option} value={option}>{labeler(option)}</option>
@@ -193,9 +193,9 @@ function Pagination({ page, totalPages, filters, slug }: { page: number; totalPa
   const next = page < totalPages ? buildUrl(slug, { ...filters, page: page + 1 }) : null;
   return (
     <div className="flex items-center justify-between">
-      {previous ? <Link href={previous} className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium">前へ</Link> : <span />}
+      {previous ? <Link href={previous} className="rounded-md border border-line bg-white px-4 py-2 text-sm font-medium">前へ</Link> : <span />}
       <span className="text-sm text-stone-600">{page}/{totalPages}</span>
-      {next ? <Link href={next} className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium">もっと見る</Link> : <span />}
+      {next ? <Link href={next} className="rounded-md border border-line bg-white px-4 py-2 text-sm font-medium">もっと見る</Link> : <span />}
     </div>
   );
 }

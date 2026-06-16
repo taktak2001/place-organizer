@@ -24,7 +24,7 @@ export default function DebugEnvPage() {
         </p>
       </header>
 
-      <section className="rounded-lg border border-stone-300 bg-white p-4">
+      <section className="rounded-lg border border-line bg-white p-4">
         <dl className="grid gap-3 text-sm">
           {rows.map(([label, value]) => (
             <div key={label} className="grid gap-1 sm:grid-cols-2">
@@ -45,7 +45,7 @@ export default function DebugEnvPage() {
           </ul>
         </section>
       ) : (
-        <section className="rounded-lg border border-stone-300 bg-white p-4 text-sm font-semibold text-moss">
+        <section className="rounded-lg border border-line bg-white p-4 text-sm font-semibold text-moss">
           公開Supabase接続情報は読み込まれています。
         </section>
       )}

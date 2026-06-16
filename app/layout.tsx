@@ -23,7 +23,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#6f7f4f"
+  themeColor: "#303841"
 };
 
 const navItems = [
@@ -42,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ja">
       <body>
         <div className="min-h-screen">
-          <header className="border-b border-stone-300 bg-paper/90">
+          <header className="border-b border-line bg-paper/90">
             <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4">
               <Link href="/" className="text-xl font-semibold tracking-normal text-ink">
                 Place Organizer
@@ -59,11 +59,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 ))}
               </nav>
               <details className="relative md:hidden">
-                <summary className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-md border border-stone-300 bg-white text-sm font-semibold">
+                <summary className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-md border border-line bg-white text-sm font-semibold">
                   <span className="sr-only">メニュー</span>
                   <span aria-hidden="true">☰</span>
                 </summary>
-                <nav className="absolute right-0 z-20 mt-2 grid min-w-44 gap-1 rounded-lg border border-stone-300 bg-white p-2 text-sm shadow-lg">
+                <nav className="absolute right-0 z-20 mt-2 grid min-w-44 gap-1 rounded-lg border border-line bg-white p-2 text-sm shadow-lg">
                   {items.map((item) => (
                     <Link key={item.href} href={item.href} className="rounded-md px-3 py-2 text-stone-700 hover:bg-paper hover:text-ink">
                       {item.label}

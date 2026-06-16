@@ -134,7 +134,7 @@ export function ReviewClient({ places, mode, status, initialCounts }: Props) {
     return (
       <div className="space-y-3">
         <StatusTabs counts={counts} status={status} mode={mode} />
-        <div className="rounded-lg border border-stone-300 bg-white p-6 text-sm text-stone-600">{ja.review.noTargets}</div>
+        <div className="rounded-lg border border-line bg-white p-6 text-sm text-stone-600">{ja.review.noTargets}</div>
       </div>
     );
   }
@@ -143,23 +143,23 @@ export function ReviewClient({ places, mode, status, initialCounts }: Props) {
     return (
       <div className="space-y-3">
         <StatusTabs counts={counts} status={status} mode={mode} />
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-stone-300 bg-white p-3 text-sm">
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-white p-3 text-sm">
           <span>{ja.review.remaining}: {items.length}</span>
-          <button type="button" onClick={() => setSelected(new Set(items.map((item) => item.id)))} className="min-h-11 rounded-md border border-stone-300 px-3 py-2">{ja.review.selectAll}</button>
-          <button type="button" onClick={() => setSelected(new Set())} className="min-h-11 rounded-md border border-stone-300 px-3 py-2">{ja.review.clearSelection}</button>
-          <button type="button" disabled={selected.size === 0} onClick={() => updateStatus([...selected], "enriched")} className="min-h-11 rounded-md bg-moss px-3 py-2 font-semibold text-white disabled:opacity-50">{ja.review.approveSelected}</button>
-          <button type="button" disabled={selected.size === 0} onClick={() => updateStatus([...selected], "pending_enrichment")} className="min-h-11 rounded-md border border-stone-300 px-3 py-2 disabled:opacity-50">{ja.review.resetSelected}</button>
+          <button type="button" onClick={() => setSelected(new Set(items.map((item) => item.id)))} className="min-h-11 rounded-md border border-line px-3 py-2">{ja.review.selectAll}</button>
+          <button type="button" onClick={() => setSelected(new Set())} className="min-h-11 rounded-md border border-line px-3 py-2">{ja.review.clearSelection}</button>
+          <button type="button" disabled={selected.size === 0} onClick={() => updateStatus([...selected], "enriched")} className="min-h-11 rounded-md bg-ink px-3 py-2 font-semibold text-white hover:bg-[#222A31] disabled:opacity-50">{ja.review.approveSelected}</button>
+          <button type="button" disabled={selected.size === 0} onClick={() => updateStatus([...selected], "pending_enrichment")} className="min-h-11 rounded-md border border-line px-3 py-2 disabled:opacity-50">{ja.review.resetSelected}</button>
           {status === "place_id_candidate" ? (
             <>
               <button type="button" disabled={selected.size === 0} onClick={() => placeIdAction([...selected], "approve_place_id_candidate")} className="min-h-11 rounded-md border border-moss px-3 py-2 disabled:opacity-50">候補を承認</button>
-              <button type="button" disabled={selected.size === 0} onClick={() => placeIdAction([...selected], "keep_source_url_confirmed")} className="min-h-11 rounded-md border border-stone-300 px-3 py-2 disabled:opacity-50">元リンクのまま</button>
+              <button type="button" disabled={selected.size === 0} onClick={() => placeIdAction([...selected], "keep_source_url_confirmed")} className="min-h-11 rounded-md border border-line px-3 py-2 disabled:opacity-50">元リンクのまま</button>
             </>
           ) : null}
           {message ? <span className="text-stone-600">{message}</span> : null}
         </div>
         <div className="grid gap-3">
           {items.map((place) => (
-            <label key={place.id} className="grid gap-3 rounded-lg border border-stone-300 bg-white p-4 md:grid-cols-[auto_1fr]">
+            <label key={place.id} className="grid gap-3 rounded-lg border border-line bg-white p-4 md:grid-cols-[auto_1fr]">
               <input
                 type="checkbox"
                 checked={selected.has(place.id)}
@@ -182,26 +182,26 @@ export function ReviewClient({ places, mode, status, initialCounts }: Props) {
   return (
     <div className="space-y-3">
       <StatusTabs counts={counts} status={status} mode={mode} />
-      <div className="rounded-lg border border-stone-300 bg-white p-3 text-sm text-stone-700">
+      <div className="rounded-lg border border-line bg-white p-3 text-sm text-stone-700">
         {jaStatus(status)}: {ja.review.remaining} {items.length}
       </div>
       {current ? (
-        <article className="rounded-lg border border-stone-300 bg-white p-5">
+        <article className="rounded-lg border border-line bg-white p-5">
           <ReviewSummary place={current} />
           <div className="mt-5 grid gap-2 sm:flex sm:flex-wrap">
-            <button type="button" onClick={() => updateStatus([current.id], "enriched")} className="min-h-11 rounded-md bg-moss px-4 py-2 text-sm font-semibold text-white">{ja.review.approve}</button>
+            <button type="button" onClick={() => updateStatus([current.id], "enriched")} className="min-h-11 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-[#222A31]">{ja.review.approve}</button>
             <button type="button" onClick={() => confirmSourceUrl([current.id])} className="min-h-11 rounded-md border border-moss px-4 py-2 text-sm font-medium text-moss">元リンクを正として採用</button>
-            <button type="button" onClick={() => updateStatus([current.id], "not_found")} className="min-h-11 rounded-md border border-stone-300 px-4 py-2 text-sm font-medium">{ja.review.markNotFound}</button>
-            <button type="button" onClick={() => updateStatus([current.id], "pending_enrichment")} className="min-h-11 rounded-md border border-stone-300 px-4 py-2 text-sm font-medium">{ja.review.resetPending}</button>
+            <button type="button" onClick={() => updateStatus([current.id], "not_found")} className="min-h-11 rounded-md border border-line px-4 py-2 text-sm font-medium">{ja.review.markNotFound}</button>
+            <button type="button" onClick={() => updateStatus([current.id], "pending_enrichment")} className="min-h-11 rounded-md border border-line px-4 py-2 text-sm font-medium">{ja.review.resetPending}</button>
             <button type="button" onClick={() => updateStatus([current.id], "error")} className="min-h-11 rounded-md border border-clay px-4 py-2 text-sm font-medium text-clay">{ja.review.markError}</button>
             {status === "place_id_candidate" ? (
               <>
                 <button type="button" onClick={() => placeIdAction([current.id], "approve_place_id_candidate")} className="min-h-11 rounded-md border border-moss px-4 py-2 text-sm font-medium text-moss">Place ID候補を承認</button>
-                <button type="button" onClick={() => placeIdAction([current.id], "reject_place_id_candidate")} className="min-h-11 rounded-md border border-stone-300 px-4 py-2 text-sm font-medium">候補を却下</button>
-                <button type="button" onClick={() => placeIdAction([current.id], "keep_source_url_confirmed")} className="min-h-11 rounded-md border border-stone-300 px-4 py-2 text-sm font-medium">元リンク確認済みのまま</button>
+                <button type="button" onClick={() => placeIdAction([current.id], "reject_place_id_candidate")} className="min-h-11 rounded-md border border-line px-4 py-2 text-sm font-medium">候補を却下</button>
+                <button type="button" onClick={() => placeIdAction([current.id], "keep_source_url_confirmed")} className="min-h-11 rounded-md border border-line px-4 py-2 text-sm font-medium">元リンク確認済みのまま</button>
               </>
             ) : null}
-            <button type="button" onClick={() => skip(current.id)} className="min-h-11 rounded-md border border-stone-300 px-4 py-2 text-sm font-medium">{ja.review.skip}</button>
+            <button type="button" onClick={() => skip(current.id)} className="min-h-11 rounded-md border border-line px-4 py-2 text-sm font-medium">{ja.review.skip}</button>
           </div>
           {message ? <div className="mt-3 text-sm text-stone-600">{message}</div> : null}
         </article>
@@ -217,7 +217,7 @@ function StatusTabs({ counts, status, mode }: { counts: Props["initialCounts"]; 
         <Link
           key={item}
           href={`/review?status=${item}&mode=${mode}`}
-          className={`inline-flex h-10 shrink-0 items-center rounded-md border px-4 text-sm font-medium ${item === status ? "border-moss bg-moss text-white" : "border-stone-300 bg-white text-ink"}`}
+          className={`inline-flex h-10 shrink-0 items-center rounded-md border px-4 text-sm font-medium ${item === status ? "border-moss bg-moss text-white" : "border-line bg-white text-ink"}`}
         >
           {jaStatus(item)} <span className="ml-1 opacity-80">{counts[item]}</span>
         </Link>
@@ -266,7 +266,7 @@ function ReviewSummary({ place, compact = false }: { place: ReviewPlace; compact
         {distanceDiff !== null && distanceDiff > 1.5 ? <span className="rounded-md bg-clay px-2 py-1 text-xs font-semibold text-white">距離差分あり</span> : null}
         <span className="rounded-md bg-paper px-2 py-1 text-xs text-stone-700">{jaCategory(classification?.main_category ?? "Other")}</span>
         {links.map((link) => (
-          <span key={link.id ?? `${place.id}-${link.source_list_name}`} className="rounded-md border border-stone-300 px-2 py-0.5 text-xs">
+          <span key={link.id ?? `${place.id}-${link.source_list_name}`} className="rounded-md border border-line px-2 py-0.5 text-xs">
             {jaDisplay(link.source_list_name)}
           </span>
         ))}
@@ -362,7 +362,7 @@ function Meta({ label, value }: { label: string; value: unknown }) {
 
 function Outbound({ href, label }: { href: string; label: string }) {
   return (
-    <a href={href} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-2 rounded-md border border-stone-300 px-3 text-sm font-medium hover:border-moss">
+    <a href={href} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-2 rounded-md border border-line px-3 text-sm font-medium hover:border-moss">
       {label}
       <ExternalLink className="h-4 w-4" />
     </a>

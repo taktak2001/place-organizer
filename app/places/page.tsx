@@ -31,11 +31,11 @@ export default async function PlacesPage({ searchParams }: { searchParams: Searc
 
       <QuickFilters filters={filters} />
 
-      <form className="rounded-lg border border-stone-300 bg-white p-4">
+      <form className="rounded-lg border border-line bg-white p-4">
         <div className="grid gap-3 md:grid-cols-[1fr_auto]">
           <label>
             <span className="text-xs font-medium uppercase text-stone-600">{ja.places.search}</span>
-            <div className="mt-1 flex items-center gap-2 rounded-md border border-stone-300 px-3">
+            <div className="mt-1 flex items-center gap-2 rounded-md border border-line px-3">
               <Search className="h-4 w-4 text-stone-500" />
               <input name="search" defaultValue={filters.search} className="h-12 w-full bg-transparent outline-none md:h-10" placeholder={ja.places.name} />
             </div>
@@ -46,7 +46,7 @@ export default async function PlacesPage({ searchParams }: { searchParams: Searc
         {filters.want ? <input type="hidden" name="want" value="1" /> : null}
       </form>
 
-      <div className="flex flex-col gap-2 rounded-lg border border-stone-300 bg-white p-4 text-sm text-stone-700 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-2 rounded-lg border border-line bg-white p-4 text-sm text-stone-700 md:flex-row md:items-center md:justify-between">
         <div>
           絞り込み結果: <span className="font-semibold text-ink">{filtered.length}</span>件
           <span className="ml-2 text-stone-500">全{places.filter(matchesArchive).length}件中</span>
@@ -56,7 +56,7 @@ export default async function PlacesPage({ searchParams }: { searchParams: Searc
 
       <div className="grid gap-3">
         {visiblePlaces.map((place) => <PlaceBrowseCard key={String(place.id)} place={place} />)}
-        {visiblePlaces.length === 0 ? <div className="rounded-lg border border-stone-300 bg-white p-6 text-sm text-stone-600">{ja.places.noPlacesFound}</div> : null}
+        {visiblePlaces.length === 0 ? <div className="rounded-lg border border-line bg-white p-6 text-sm text-stone-600">{ja.places.noPlacesFound}</div> : null}
       </div>
 
       <Pagination page={page} totalPages={totalPages} filters={filters} />
@@ -74,7 +74,7 @@ function QuickFilters({ filters }: { filters: ReturnType<typeof normalizeSearchP
     ...CATEGORY_ORDER.map((category) => ({ label: jaCategory(category), category }))
   ];
   return (
-    <section className="rounded-lg border border-stone-300 bg-white p-3">
+    <section className="rounded-lg border border-line bg-white p-3">
       <div className="mb-2 text-xs font-medium uppercase text-stone-600">クイックフィルタ</div>
       <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible">
         {items.map((item) => {
@@ -84,7 +84,7 @@ function QuickFilters({ filters }: { filters: ReturnType<typeof normalizeSearchP
             <Link
               key={item.label}
               href={href}
-              className={`inline-flex h-11 shrink-0 items-center rounded-full border px-4 text-sm font-semibold ${active ? "border-moss bg-moss text-white" : "border-stone-300 bg-paper text-ink hover:border-moss hover:text-moss"}`}
+              className={`inline-flex h-11 shrink-0 items-center rounded-full border px-4 text-sm font-semibold ${active ? "border-moss bg-moss text-white" : "border-line bg-paper text-ink hover:border-moss hover:text-moss"}`}
             >
               {item.label}
             </Link>
@@ -100,9 +100,9 @@ function Pagination({ page, totalPages, filters }: { page: number; totalPages: n
   const next = page < totalPages ? buildPlacesUrl({ ...filters, page: page + 1 }) : null;
   return (
     <div className="flex items-center justify-between">
-      {previous ? <Link href={previous} className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium">前へ</Link> : <span />}
+      {previous ? <Link href={previous} className="rounded-md border border-line bg-white px-4 py-2 text-sm font-medium">前へ</Link> : <span />}
       <span className="text-sm text-stone-600">{page}/{totalPages}</span>
-      {next ? <Link href={next} className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium">もっと見る</Link> : <span />}
+      {next ? <Link href={next} className="rounded-md border border-line bg-white px-4 py-2 text-sm font-medium">もっと見る</Link> : <span />}
     </div>
   );
 }

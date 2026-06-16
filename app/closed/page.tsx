@@ -31,13 +31,13 @@ export default async function ClosedPage({ searchParams }: { searchParams: Searc
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 border-b border-stone-300 pb-6 lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex flex-col gap-4 border-b border-line pb-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-sm font-medium uppercase text-moss">{ja.closed.eyebrow}</p>
           <h1 className="mt-1 text-3xl font-semibold">{ja.closed.title}</h1>
           <p className="mt-2 max-w-3xl text-stone-700">{ja.closed.description}</p>
         </div>
-        <Link href="/places?archive_view=archived" className="inline-flex h-11 items-center justify-center rounded-md border border-stone-300 bg-white px-4 text-sm font-medium">
+        <Link href="/places?archive_view=archived" className="inline-flex h-11 items-center justify-center rounded-md border border-line bg-white px-4 text-sm font-medium">
           {ja.closed.archivedView}
         </Link>
       </div>
@@ -49,14 +49,14 @@ export default async function ClosedPage({ searchParams }: { searchParams: Searc
           <Link
             key={item}
             href={`/closed?status=${item}`}
-            className={`inline-flex h-10 shrink-0 items-center rounded-md border px-4 text-sm font-medium ${item === status ? "border-moss bg-moss text-white" : "border-stone-300 bg-white text-ink"}`}
+            className={`inline-flex h-10 shrink-0 items-center rounded-md border px-4 text-sm font-medium ${item === status ? "border-moss bg-moss text-white" : "border-line bg-white text-ink"}`}
           >
             {closedFilterLabel(item)}
           </Link>
         ))}
       </div>
 
-      <div className="rounded-lg border border-stone-300 bg-white p-4 text-sm text-stone-700">
+      <div className="rounded-lg border border-line bg-white p-4 text-sm text-stone-700">
         表示件数: <span className="font-semibold text-ink">{rows.length}</span>件
       </div>
 
@@ -64,7 +64,7 @@ export default async function ClosedPage({ searchParams }: { searchParams: Searc
         {rows.map(({ place, closed }) => (
           <ClosedCard key={String(place.id)} place={place} closedStatus={closed?.status ?? null} adminEnabled={adminEnabled} />
         ))}
-        {rows.length === 0 ? <div className="rounded-lg border border-stone-300 bg-white p-6 text-sm text-stone-600">{ja.closed.noTargets}</div> : null}
+        {rows.length === 0 ? <div className="rounded-lg border border-line bg-white p-6 text-sm text-stone-600">{ja.closed.noTargets}</div> : null}
       </div>
     </div>
   );
@@ -97,7 +97,7 @@ function ClosedCard({ place, closedStatus, adminEnabled }: { place: PlaceRow; cl
     longitude: place.longitude
   });
   return (
-    <article className="rounded-lg border border-stone-300 bg-white p-4">
+    <article className="rounded-lg border border-line bg-white p-4">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -109,7 +109,7 @@ function ClosedCard({ place, closedStatus, adminEnabled }: { place: PlaceRow; cl
             </span>
             <span className="rounded-md bg-paper px-2 py-1 text-xs text-stone-700">{jaCategory(classification?.main_category ?? "Other")}</span>
             {links.map((link) => (
-              <span key={String(link.id ?? `${place.id}-${link.source_list_name}`)} className="rounded-md border border-stone-300 px-2 py-0.5 text-xs">
+              <span key={String(link.id ?? `${place.id}-${link.source_list_name}`)} className="rounded-md border border-line px-2 py-0.5 text-xs">
                 {jaDisplay(link.source_list_name)}
               </span>
             ))}
@@ -123,12 +123,12 @@ function ClosedCard({ place, closedStatus, adminEnabled }: { place: PlaceRow; cl
         </div>
         <div className="grid shrink-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:flex lg:flex-wrap lg:justify-end">
           {mapsHref ? (
-            <a href={mapsHref} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-moss px-4 text-sm font-semibold text-white hover:bg-ink lg:h-10">
+            <a href={mapsHref} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-ink px-4 text-sm font-semibold text-white hover:bg-[#222A31] lg:h-10">
               Googleマップで開く
               <ExternalLink className="h-4 w-4" />
             </a>
           ) : null}
-          <Link href={`/places/${String(place.id)}`} className="inline-flex h-12 items-center justify-center rounded-md border border-stone-300 px-4 text-sm font-medium lg:h-10">
+          <Link href={`/places/${String(place.id)}`} className="inline-flex h-12 items-center justify-center rounded-md border border-line px-4 text-sm font-medium lg:h-10">
             {ja.places.viewDetail}
           </Link>
           {adminEnabled ? <ArchiveActions placeId={String(place.id)} closedStatus={closedStatus} isArchived={place.is_archived === true} compact /> : null}

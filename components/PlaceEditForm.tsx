@@ -41,7 +41,7 @@ export function PlaceEditForm({ placeId, place, classification }: Props) {
   }
 
   return (
-    <form action={submit} className="grid gap-3 rounded-lg border border-stone-300 bg-white p-4 md:grid-cols-2">
+    <form action={submit} className="grid gap-3 rounded-lg border border-line bg-white p-4 md:grid-cols-2">
       <EditInput name="google_place_id" label={ja.placeDetail.googlePlaceId} value={place.google_place_id} />
       <EditInput name="name" label={ja.places.name} value={place.name} />
       <EditInput name="address" label={ja.placeDetail.address} value={place.address} />
@@ -67,7 +67,7 @@ function EditInput({ name, label, value }: { name: string; label: string; value:
   return (
     <label>
       <span className="text-xs font-medium uppercase text-stone-600">{label}</span>
-      <input name={name} defaultValue={String(value ?? "")} className="mt-1 h-10 w-full rounded-md border border-stone-300 px-3 outline-none" />
+      <input name={name} defaultValue={String(value ?? "")} className="mt-1 h-10 w-full rounded-md border border-line px-3 outline-none" />
     </label>
   );
 }

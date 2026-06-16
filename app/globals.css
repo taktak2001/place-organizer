@@ -4,11 +4,21 @@
 
 :root {
   color-scheme: light;
+  --color-bg: #F5F5F5;
+  --color-surface: #FFFFFF;
+  --color-ink: #303841;
+  --color-muted: rgba(48, 56, 65, 0.68);
+  --color-border: rgba(48, 56, 65, 0.14);
+  --color-primary: #303841;
+  --color-accent: #76ABAE;
+  --color-accent-soft: #E8F3F3;
+  --color-warning: #FF5722;
+  --color-warning-soft: #FFF0EB;
 }
 
 body {
-  background: #f7f4ed;
-  color: #1e2420;
+  background: var(--color-bg);
+  color: var(--color-ink);
 }
 
 button,

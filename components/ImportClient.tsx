@@ -50,9 +50,9 @@ export function ImportClient() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-lg border border-stone-300 bg-white p-5">
+      <section className="rounded-lg border border-line bg-white p-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <label className="flex min-h-28 flex-1 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-stone-400 bg-paper px-4 py-6 text-center">
+          <label className="flex min-h-28 flex-1 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-line bg-paper px-4 py-6 text-center">
             <FileUp className="mb-2 h-6 w-6 text-moss" aria-hidden />
             <span className="font-medium">{files.length > 0 ? selectedFileLabel(files) : ja.importPage.selectFile}</span>
             <span className="mt-1 text-sm text-stone-600">{ja.importPage.uploadHint}</span>
@@ -68,13 +68,13 @@ export function ImportClient() {
             type="button"
             onClick={parseFile}
             disabled={files.length === 0 || loading}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-moss px-4 text-sm font-semibold text-white disabled:opacity-50"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-ink px-4 text-sm font-semibold text-white hover:bg-[#222A31] disabled:opacity-50"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
             {ja.importPage.parse}
           </button>
         </div>
-        {message ? <p className="mt-4 rounded-md bg-stone-100 px-3 py-2 text-sm text-stone-800">{message}</p> : null}
+        {message ? <p className="mt-4 rounded-md bg-paper px-3 py-2 text-sm text-stone-800">{message}</p> : null}
       </section>
 
       {result ? (
@@ -106,7 +106,7 @@ export function ImportClient() {
               </div>
             </div>
           ) : (
-            <div className="rounded-lg border border-stone-300 bg-white p-4 text-sm text-stone-700">
+            <div className="rounded-lg border border-line bg-white p-4 text-sm text-stone-700">
               {ja.importPage.initialImport}
             </div>
           )}
@@ -115,7 +115,7 @@ export function ImportClient() {
             <Panel title={ja.importPage.fileCounts}>
               <div className="grid gap-2">
                 {Object.entries(result.file_counts).map(([name, count]) => (
-                  <div key={name} className="flex justify-between gap-4 border-b border-stone-200 py-2 text-sm">
+                  <div key={name} className="flex justify-between gap-4 border-b border-line py-2 text-sm">
                     <span className="truncate">{name}</span>
                     <span className="font-semibold">{count}</span>
                   </div>
@@ -125,7 +125,7 @@ export function ImportClient() {
             <Panel title={ja.importPage.listCounts}>
               <div className="grid gap-2">
                 {Object.entries(result.list_counts).map(([name, count]) => (
-                  <div key={name} className="flex justify-between border-b border-stone-200 py-2 text-sm">
+                  <div key={name} className="flex justify-between border-b border-line py-2 text-sm">
                     <span>{name}</span>
                     <span className="font-semibold">{count}</span>
                   </div>
@@ -168,7 +168,7 @@ export function ImportClient() {
                 </thead>
                 <tbody>
                   {sample.map((item) => (
-                    <tr key={`${item.normalized_key}-${item.source_list_name}`} className="border-t border-stone-200">
+                    <tr key={`${item.normalized_key}-${item.source_list_name}`} className="border-t border-line">
                       <td className="py-2 pr-4 font-medium">{item.name}</td>
                       <td className="py-2 pr-4">{item.source_list_name}</td>
                       <td className="py-2 pr-4 text-stone-700">{item.address}</td>
@@ -201,7 +201,7 @@ function selectedFileLabel(files: File[]) {
 
 function Metric({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-lg border border-stone-300 bg-white p-4">
+    <div className="rounded-lg border border-line bg-white p-4">
       <div className="text-sm text-stone-600">{label}</div>
       <div className="mt-1 text-xl font-semibold">{value}</div>
     </div>
@@ -210,7 +210,7 @@ function Metric({ label, value }: { label: string; value: string | number }) {
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-stone-300 bg-white p-4">
+    <div className="rounded-lg border border-line bg-white p-4">
       <h2 className="mb-3 text-base font-semibold">{title}</h2>
       {children}
     </div>

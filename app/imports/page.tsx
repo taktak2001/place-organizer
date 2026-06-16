@@ -22,12 +22,12 @@ export default async function ImportsPage() {
           <p className="text-sm font-medium uppercase text-moss">{ja.imports.eyebrow}</p>
           <h1 className="mt-1 text-3xl font-semibold">{ja.imports.title}</h1>
         </div>
-        <Link href="/import" className="rounded-md bg-moss px-4 py-2 text-sm font-semibold text-white">{ja.imports.newImport}</Link>
+        <Link href="/import" className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-[#222A31]">{ja.imports.newImport}</Link>
       </div>
 
       {error ? <div className="rounded-lg border border-clay bg-white p-4 text-sm text-stone-700">{error}</div> : null}
 
-      <div className="overflow-hidden rounded-lg border border-stone-300 bg-white">
+      <div className="overflow-hidden rounded-lg border border-line bg-white">
         <table className="min-w-full text-left text-sm">
           <thead className="bg-paper text-stone-700">
             <tr>
@@ -45,7 +45,7 @@ export default async function ImportsPage() {
           </thead>
           <tbody>
             {batches.map((batch) => (
-              <tr key={String(batch.id)} className="border-t border-stone-200">
+              <tr key={String(batch.id)} className="border-t border-line">
                 <td className="px-4 py-3 whitespace-nowrap">{formatDate(batch.created_at)}</td>
                 <td className="px-4 py-3">{String(batch.filename ?? "")}</td>
                 <td className="px-4 py-3">{jaStatus(batch.status)}</td>

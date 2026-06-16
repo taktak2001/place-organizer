@@ -26,7 +26,7 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
 
   if (!place) {
     return (
-      <div className="rounded-lg border border-stone-300 bg-white p-6">
+      <div className="rounded-lg border border-line bg-white p-6">
         <h1 className="text-xl font-semibold">{ja.placeDetail.notFound}</h1>
         {error ? <p className="mt-2 text-sm text-stone-600">{error}</p> : null}
         <Link href="/places" className="mt-4 inline-block text-sm font-medium text-moss">{ja.placeDetail.backToPlaces}</Link>
@@ -77,13 +77,13 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
           {String(place.address ?? "")}
         </p>
         {preferredMapsUrl ? (
-          <a href={preferredMapsUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-moss">
+          <a href={preferredMapsUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex h-11 items-center gap-2 rounded-md bg-ink px-4 text-sm font-semibold text-white hover:bg-[#222A31]">
             {ja.placeDetail.openInGoogleMaps}
             <ExternalLink className="h-4 w-4" />
           </a>
         ) : null}
         {place.enrichment_status === "source_url_confirmed" ? (
-          <div className="mt-4 rounded-lg border border-stone-300 bg-paper p-4 text-sm text-stone-700">
+          <div className="mt-4 rounded-lg border border-line bg-paper p-4 text-sm text-stone-700">
             <p className="font-medium text-ink">{ja.placeDetail.sourceUrlConfirmedNotice}</p>
             <p className="mt-1">{ja.placeDetail.candidateNotice}</p>
           </div>
@@ -146,7 +146,7 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
       </section>
 
       {adminEnabled ? (
-        <section className="rounded-lg border border-stone-300 bg-white p-4">
+        <section className="rounded-lg border border-line bg-white p-4">
           <h2 className="text-base font-semibold">{ja.closed.title}</h2>
           <p className="mt-2 text-sm text-stone-700">
             閉業や誤登録の整理は論理アーカイブで行います。元CSV由来のGoogle Maps URLとリスト所属は保持されます。
@@ -157,7 +157,7 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
         </section>
       ) : null}
 
-      <section className="rounded-lg border border-stone-300 bg-white p-4">
+      <section className="rounded-lg border border-line bg-white p-4">
         <h2 className="text-base font-semibold">{ja.placeDetail.rawGoogleSummary}</h2>
         <dl className="mt-3 grid gap-2 text-sm md:grid-cols-2">
           {googleSummaryRows(place.raw_google).map(([label, value]) => (
@@ -173,13 +173,13 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
         </details>
       </section>
 
-      <section className="rounded-lg border border-stone-300 bg-white p-4">
+      <section className="rounded-lg border border-line bg-white p-4">
         <h2 className="text-base font-semibold">{ja.placeDetail.sourceLists}</h2>
         <div className="mt-3 flex flex-wrap gap-2">
           {links.map((link) => (
             <span
               key={String(link.id)}
-              className={`rounded-md border px-3 py-1 text-sm ${link.active === false ? "border-stone-200 text-stone-400" : "border-stone-300"}`}
+              className={`rounded-md border px-3 py-1 text-sm ${link.active === false ? "border-line text-stone-400" : "border-line"}`}
             >
               {jaDisplay(link.source_list_name)}
               {link.active === false ? "（無効）" : ""}
@@ -191,7 +191,7 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
       {adminEnabled ? (
         <section>
           <h2 className="mb-3 text-base font-semibold">{ja.placeDetail.editClassification}</h2>
-          <div className="mb-3 rounded-lg border border-stone-300 bg-white p-4">
+          <div className="mb-3 rounded-lg border border-line bg-white p-4">
             <h3 className="text-sm font-semibold">AI分類</h3>
             <p className="mt-1 text-sm text-stone-700">AI分類は補助です。手動分類が優先されている場合は上書きしません。</p>
             <div className="mt-3">
@@ -202,7 +202,7 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
         </section>
       ) : null}
 
-      <section className="rounded-lg border border-stone-300 bg-white p-4">
+      <section className="rounded-lg border border-line bg-white p-4">
         <h2 className="text-base font-semibold">{ja.placeDetail.rawImport}</h2>
         <details className="mt-3">
           <summary className="cursor-pointer text-sm font-medium text-moss">{ja.placeDetail.rawImport}</summary>
@@ -215,7 +215,7 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
 
 function InfoPanel({ title, rows }: { title: string; rows: Array<[string, unknown]> }) {
   return (
-    <div className="rounded-lg border border-stone-300 bg-white p-4">
+    <div className="rounded-lg border border-line bg-white p-4">
       <h2 className="text-base font-semibold">{title}</h2>
       <dl className="mt-3 space-y-2 text-sm">
         {rows.map(([label, value]) => (

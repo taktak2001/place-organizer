@@ -35,7 +35,7 @@ export default async function DebugSupabaseReadPage() {
         </p>
       </header>
 
-      <section className="rounded-lg border border-stone-300 bg-white p-4">
+      <section className="rounded-lg border border-line bg-white p-4">
         <dl className="grid gap-3 text-sm">
           <DebugRow label="has env URL" value={String(env.hasUrl)} />
           <DebugRow label="has env anon key" value={String(env.hasAnonKey)} />
@@ -56,7 +56,7 @@ export default async function DebugSupabaseReadPage() {
 
       <section className="grid gap-3">
         {results.map((result) => (
-          <div key={result.name} className="rounded-lg border border-stone-300 bg-white p-4 text-sm">
+          <div key={result.name} className="rounded-lg border border-line bg-white p-4 text-sm">
             <h2 className="font-semibold">{result.name}</h2>
             <dl className="mt-3 grid gap-2">
               <DebugRow label="success" value={String(result.success)} />

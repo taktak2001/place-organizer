@@ -36,7 +36,7 @@ function CategoryCard({ slug, places }: { slug: CategorySlug; places: PlaceRow[]
   const categoryPlaces = sortRecommended(places.filter((place) => String(firstRelated(place.place_classifications)?.main_category ?? "Other") === category));
   const wantCount = categoryPlaces.filter(isWantToGo).length;
   return (
-    <Link href={`/category/${slug}`} className="block rounded-lg border border-stone-300 bg-white p-4 transition active:scale-[0.99] active:bg-paper hover:border-moss hover:shadow-sm">
+    <Link href={`/category/${slug}`} className="block rounded-lg border border-line bg-white p-4 transition active:scale-[0.99] active:bg-paper hover:border-moss hover:shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold">{jaCategory(category)}</h2>

@@ -3,7 +3,7 @@ import { ExternalLink } from "lucide-react";
 import { classifyDisplayRegion } from "@/lib/classification/display-region";
 import { ja, jaCategory, jaCategoryTag, jaDisplay, jaGooglePlaceTypes, jaSceneTag } from "@/lib/i18n/ja";
 import { googleMapsUri, isCandidateOnly, preferredGoogleMapsUrl } from "@/lib/import/source-fields";
-import { activeLinks, categoryTags, firstRelated, isWantToGo, sceneTags, type PlaceRow } from "@/lib/places/browse";
+import { activeLinks, categoryTags, firstRelated, isWantToGo, priceLevelLabel, sceneTags, type PlaceRow } from "@/lib/places/browse";
 
 type Props = {
   place: PlaceRow;
@@ -28,15 +28,17 @@ export function PlaceBrowseCard({ place, mode = "general" }: Props) {
   const candidateOnly = isCandidateOnly(place.raw_google);
   const candidateHref = googleMapsUri(place.raw_google);
   const regionLabel = displayRegionLabel(place, classification);
+  const restaurantRegionTags = category === "Restaurant" ? [regionLabel].map((value) => String(value ?? "").trim()).filter((value) => value && value !== "未分類") : [];
+  const price = category === "Restaurant" && place.price_level ? priceLevelLabel(place.price_level) : null;
 
   return (
-    <article className="rounded-lg border border-stone-300 bg-white p-3 shadow-sm md:p-4">
+    <article className="rounded-lg border border-line bg-white p-3 shadow-sm md:p-4">
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-start gap-2">
           <Link href={`/places/${String(place.id)}`} className="min-w-0 flex-1 text-lg font-semibold leading-snug text-ink hover:text-moss">
             {String(place.name)}
           </Link>
-          {mode === "general" ? <span className="rounded-md bg-paper px-2 py-1 text-xs font-medium text-stone-700">{jaCategory(category)}</span> : null}
+          {mode === "general" ? <span className="rounded-md border border-line bg-white px-2 py-1 text-xs font-medium text-ink">{jaCategory(category)}</span> : null}
         </div>
 
         <div className="flex flex-wrap gap-1.5">
@@ -46,15 +48,25 @@ export function PlaceBrowseCard({ place, mode = "general" }: Props) {
             </span>
           ) : null}
           {cuisineTags.map((tag) => (
-            <span key={`cuisine-${tag}`} className="rounded-md bg-paper px-2 py-0.5 text-xs font-medium text-stone-800">
+            <span key={`cuisine-${tag}`} className="rounded-md border border-line bg-white px-2 py-0.5 text-xs font-medium text-ink">
               {jaCategoryTag(tag)}
             </span>
           ))}
           {restaurantSceneTags.map((tag) => (
-            <span key={`scene-${tag}`} className="rounded-md bg-moss/10 px-2 py-0.5 text-xs font-medium text-moss">
+            <span key={`scene-${tag}`} className="rounded-md bg-accentSoft px-2 py-0.5 text-xs font-medium text-ink">
               {jaSceneTag(tag)}
             </span>
           ))}
+          {restaurantRegionTags.map((tag) => (
+            <span key={`region-${tag}`} className="rounded-md border border-line bg-white px-2 py-0.5 text-xs text-stone-700">
+              {jaDisplay(tag)}
+            </span>
+          ))}
+          {price ? (
+            <span className="rounded-md bg-stone-100 px-1.5 py-0.5 text-[11px] font-medium text-stone-600">
+              {price}
+            </span>
+          ) : null}
           {tags.map((tag) => (
             <span key={tag} className={`rounded-md px-2 py-0.5 text-xs font-medium ${tagClass(category)}`}>
               {tagLabel(category, tag)}
@@ -68,17 +80,17 @@ export function PlaceBrowseCard({ place, mode = "general" }: Props) {
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {mapsHref ? (
-            <a href={mapsHref} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-moss px-4 text-sm font-semibold text-white hover:bg-ink">
+            <a href={mapsHref} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-ink px-4 text-sm font-semibold text-white hover:bg-[#222A31]">
               Googleマップで開く
               <ExternalLink className="h-4 w-4" />
             </a>
           ) : null}
-          <Link href={`/places/${String(place.id)}`} className="inline-flex h-12 items-center justify-center rounded-md border border-stone-300 px-4 text-sm font-semibold text-ink">
+          <Link href={`/places/${String(place.id)}`} className="inline-flex h-12 items-center justify-center rounded-md border border-line px-4 text-sm font-semibold text-ink">
             {ja.places.viewDetail}
           </Link>
         </div>
 
-        <details className="rounded-md border border-stone-200 bg-paper px-3 py-2 text-sm text-stone-700">
+        <details className="rounded-md border border-line bg-paper px-3 py-2 text-sm text-stone-700">
           <summary className="cursor-pointer font-medium">詳細情報</summary>
           <div className="mt-2 grid gap-2 md:grid-cols-4">
             <Meta label="元Googleマップリスト" value={sourceListLabel(links)} />
@@ -119,9 +131,9 @@ function tagLabel(category: string, tag: string) {
 }
 
 function tagClass(category: string) {
-  if (category === "Art") return "bg-paper text-stone-800";
-  if (category === "Fashion" || category === "Cafe") return "bg-paper text-stone-800";
-  return "bg-moss/10 text-moss";
+  if (category === "Art") return "border border-line bg-white text-ink";
+  if (category === "Fashion" || category === "Cafe") return "border border-line bg-white text-ink";
+  return "bg-accentSoft text-ink";
 }
 
 function sourceListLabel(links: Record<string, unknown>[]) {

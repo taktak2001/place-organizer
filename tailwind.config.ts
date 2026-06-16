@@ -5,10 +5,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#1e2420",
-        moss: "#42624a",
-        clay: "#b6654f",
-        paper: "#f7f4ed"
+        ink: "#303841",
+        moss: "#76ABAE",
+        clay: "#FF5722",
+        paper: "#F5F5F5",
+        surface: "#FFFFFF",
+        muted: "rgba(48, 56, 65, 0.68)",
+        line: "rgba(48, 56, 65, 0.14)",
+        accentSoft: "#E8F3F3",
+        warningSoft: "#FFF0EB"
       }
     }
   },

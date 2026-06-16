@@ -55,13 +55,13 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-8">
-      <section className="flex flex-col gap-5 border-b border-stone-300 pb-8 lg:flex-row lg:items-end lg:justify-between">
+      <section className="flex flex-col gap-5 border-b border-line pb-8 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-sm font-medium uppercase text-moss">{ja.dashboard.eyebrow}</p>
           <h1 className="mt-1 text-3xl font-semibold">保存場所を探す</h1>
           <p className="mt-2 max-w-2xl text-sm text-stone-700">カテゴリから素早く探して、元Googleマップリンクを開けます。</p>
         </div>
-        <Link href="/places" className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-moss px-5 text-sm font-semibold text-white lg:h-11">
+        <Link href="/places" className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-ink px-5 text-sm font-semibold text-white hover:bg-[#222A31] lg:h-11">
           <ListChecks className="h-4 w-4" />
           {ja.dashboard.browsePlaces}
         </Link>
@@ -69,7 +69,7 @@ export default async function HomePage() {
 
       {error ? <HomeError error={error} /> : null}
 
-      <section className="rounded-lg border border-stone-300 bg-white p-3">
+      <section className="rounded-lg border border-line bg-white p-3">
         <div className="text-xs font-medium uppercase text-stone-600">利用可能な場所</div>
         <div className="mt-1 text-2xl font-semibold text-ink">{data.totalAvailablePlaces}</div>
       </section>
@@ -81,7 +81,7 @@ export default async function HomePage() {
         </div>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {data.categoryCards.map((card) => (
-            <Link key={card.slug} href={`/category/${card.slug}`} className="block rounded-lg border border-stone-300 bg-white p-4 transition active:scale-[0.99] active:bg-paper hover:border-moss hover:shadow-sm">
+            <Link key={card.slug} href={`/category/${card.slug}`} className="block rounded-lg border border-line bg-white p-4 transition active:scale-[0.99] active:bg-paper hover:border-moss hover:shadow-sm">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h3 className="text-xl font-semibold">{jaCategory(card.category)}</h3>

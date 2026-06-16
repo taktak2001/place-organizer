@@ -23,10 +23,10 @@ type ReviewData = {
 export default async function ReviewPage({ searchParams }: { searchParams: SearchParams }) {
   if (!isAdminEnabled()) {
     return (
-      <div className="rounded-lg border border-stone-300 bg-white p-6">
+      <div className="rounded-lg border border-line bg-white p-6">
         <h1 className="text-xl font-semibold">{ja.review.title}</h1>
         <p className="mt-2 text-sm text-stone-700">公開環境ではレビュー操作を無効にしています。</p>
-        <Link href="/places" className="mt-4 inline-flex h-10 items-center rounded-md bg-moss px-4 text-sm font-semibold text-white">
+        <Link href="/places" className="mt-4 inline-flex h-10 items-center rounded-md bg-ink px-4 text-sm font-semibold text-white hover:bg-[#222A31]">
           {ja.dashboard.browsePlaces}
         </Link>
       </div>
@@ -44,17 +44,17 @@ export default async function ReviewPage({ searchParams }: { searchParams: Searc
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 border-b border-stone-300 pb-6 lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex flex-col gap-4 border-b border-line pb-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-sm font-medium uppercase text-moss">{ja.review.eyebrow}</p>
           <h1 className="mt-1 text-3xl font-semibold">{ja.review.title}</h1>
           <p className="mt-2 max-w-3xl text-stone-700">{ja.review.description}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href={`/review?status=${status}&mode=${mode}&page=${page}&refresh=${Date.now()}`} className="inline-flex h-10 items-center justify-center rounded-md border border-stone-300 bg-white px-4 text-sm font-medium">
+          <Link href={`/review?status=${status}&mode=${mode}&page=${page}&refresh=${Date.now()}`} className="inline-flex h-10 items-center justify-center rounded-md border border-line bg-white px-4 text-sm font-medium">
             {ja.review.reload}
           </Link>
-          <Link href="/places?needs_review_only=1" className="inline-flex h-10 items-center justify-center rounded-md border border-stone-300 bg-white px-4 text-sm font-medium">
+          <Link href="/places?needs_review_only=1" className="inline-flex h-10 items-center justify-center rounded-md border border-line bg-white px-4 text-sm font-medium">
             {ja.places.reviewOnly}
           </Link>
         </div>
@@ -63,16 +63,16 @@ export default async function ReviewPage({ searchParams }: { searchParams: Searc
       {error ? <div className="rounded-lg border border-clay bg-white p-4 text-sm text-stone-700">{error}</div> : null}
 
       <div className="flex flex-wrap gap-2">
-        <Link href={`/review?status=${status}&mode=card`} className={`rounded-md border px-3 py-2 text-sm ${mode === "card" ? "border-ink bg-ink text-white" : "border-stone-300 bg-white"}`}>{ja.review.cardMode}</Link>
-        <Link href={`/review?status=${status}&mode=list`} className={`rounded-md border px-3 py-2 text-sm ${mode === "list" ? "border-ink bg-ink text-white" : "border-stone-300 bg-white"}`}>{ja.review.listMode}</Link>
+        <Link href={`/review?status=${status}&mode=card`} className={`rounded-md border px-3 py-2 text-sm ${mode === "card" ? "border-ink bg-ink text-white" : "border-line bg-white"}`}>{ja.review.cardMode}</Link>
+        <Link href={`/review?status=${status}&mode=list`} className={`rounded-md border px-3 py-2 text-sm ${mode === "list" ? "border-ink bg-ink text-white" : "border-line bg-white"}`}>{ja.review.listMode}</Link>
       </div>
 
       <ReviewClient places={data.places} mode={mode} status={status} initialCounts={data.counts} />
 
       {mode === "list" ? (
         <div className="flex items-center justify-between">
-          {page > 1 ? <Link href={`/review?status=${status}&mode=list&page=${page - 1}`} className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm">前へ</Link> : <span />}
-          {data.places.length === PAGE_SIZE ? <Link href={`/review?status=${status}&mode=list&page=${page + 1}`} className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm">次へ</Link> : <span />}
+          {page > 1 ? <Link href={`/review?status=${status}&mode=list&page=${page - 1}`} className="rounded-md border border-line bg-white px-4 py-2 text-sm">前へ</Link> : <span />}
+          {data.places.length === PAGE_SIZE ? <Link href={`/review?status=${status}&mode=list&page=${page + 1}`} className="rounded-md border border-line bg-white px-4 py-2 text-sm">次へ</Link> : <span />}
         </div>
       ) : null}
     </div>
