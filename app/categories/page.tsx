@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { CategoryPreviewItem } from "@/components/CategoryPreviewItem";
 import { jaCategory } from "@/lib/i18n/ja";
 import { ALL_CATEGORY_SLUGS, CATEGORY_SLUGS, fetchAllPlaces, firstRelated, isWantToGo, matchesArchive, sortRecommended, type CategorySlug, type PlaceRow } from "@/lib/places/browse";
 import { safeQuery } from "@/lib/supabase/queries";
@@ -52,9 +53,7 @@ function CategoryCard({ slug, places }: { slug: CategorySlug; places: PlaceRow[]
       </div>
       <div className="mt-4 space-y-2">
         {categoryPlaces.slice(0, 3).map((place) => (
-          <div key={String(place.id)} className="truncate rounded-md bg-paper px-3 py-2 text-sm text-stone-800">
-            {String(place.name)}
-          </div>
+          <CategoryPreviewItem key={String(place.id)} category={category} place={place} />
         ))}
         {categoryPlaces.length === 0 ? <div className="text-sm text-stone-500">まだデータがありません。</div> : null}
       </div>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, ListChecks } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { CategoryPreviewItem } from "@/components/CategoryPreviewItem";
 import { PRIMARY_CATEGORY_CONFIGS } from "@/lib/categories/config";
 import { ja, jaCategory } from "@/lib/i18n/ja";
 import { safeQuery, type SafeSupabaseError } from "@/lib/supabase/queries";
@@ -20,7 +21,13 @@ type CategoryCardData = {
   slug: string;
   total: number;
   want: number;
-  samples: string[];
+  samples: CategorySample[];
+};
+
+type CategorySample = {
+  id: string;
+  name: string;
+  place_classifications: ClassificationSummaryRow | null;
 };
 
 type PlaceSummaryRow = {
@@ -32,6 +39,9 @@ type PlaceSummaryRow = {
 type ClassificationSummaryRow = {
   place_id: string;
   main_category: string | null;
+  sub_category: string | null;
+  category_tags: string[] | null;
+  scene_tags: string[] | null;
 };
 
 type SourceLinkSummaryRow = {
@@ -91,7 +101,7 @@ export default async function HomePage() {
               </div>
               <div className="mt-4 space-y-2">
                 {card.samples.map((sample) => (
-                  <div key={sample} className="truncate rounded-md bg-paper px-3 py-2 text-sm text-stone-800">{sample}</div>
+                  <CategoryPreviewItem key={sample.id} category={card.category} place={sample} />
                 ))}
                 {card.samples.length === 0 ? <div className="text-sm text-stone-500">まだデータがありません。</div> : null}
               </div>
@@ -115,7 +125,7 @@ async function getPublicHomeSummary(supabase: ReturnType<typeof getSupabaseRead>
     ),
     fetchPagedRows<ClassificationSummaryRow>(
       "home.classifications",
-      (from, to) => supabase.from("place_classifications").select("place_id, main_category").range(from, to)
+      (from, to) => supabase.from("place_classifications").select("place_id, main_category, sub_category, category_tags, scene_tags").range(from, to)
     ),
     fetchPagedRows<SourceLinkSummaryRow>(
       "home.wantSourceLinks",
@@ -125,10 +135,10 @@ async function getPublicHomeSummary(supabase: ReturnType<typeof getSupabaseRead>
 
   const availablePlaces = places.filter((place) => place.is_archived !== true);
   const availableById = new Map(availablePlaces.map((place) => [place.id, place]));
-  const categoryByPlaceId = new Map(
+  const classificationByPlaceId = new Map(
     classifications
       .filter((row) => availableById.has(row.place_id))
-      .map((row) => [row.place_id, row.main_category ?? "Other"])
+      .map((row) => [row.place_id, row])
   );
   const wantIds = new Set(wantLinks.map((link) => link.place_id).filter(Boolean));
 
@@ -137,14 +147,18 @@ async function getPublicHomeSummary(supabase: ReturnType<typeof getSupabaseRead>
     categoryCards: PUBLIC_HOME_CATEGORIES.map((config) => {
       const category = config.main_category;
       const categoryPlaces = availablePlaces
-        .filter((place) => categoryByPlaceId.get(place.id) === category)
+        .filter((place) => (classificationByPlaceId.get(place.id)?.main_category ?? "Other") === category)
         .sort((a, b) => Number(wantIds.has(b.id)) - Number(wantIds.has(a.id)) || a.name.localeCompare(b.name, "ja"));
       return {
         slug: config.slug,
         category,
         total: categoryPlaces.length,
         want: categoryPlaces.filter((place) => wantIds.has(place.id)).length,
-        samples: categoryPlaces.slice(0, 3).map((place) => place.name)
+        samples: categoryPlaces.slice(0, 3).map((place) => ({
+          id: place.id,
+          name: place.name,
+          place_classifications: classificationByPlaceId.get(place.id) ?? null
+        }))
       };
     })
   };
