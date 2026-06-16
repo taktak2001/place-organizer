@@ -10,25 +10,27 @@ export const metadata: Metadata = {
 };
 
 const navItems = [
-  { href: "/", label: ja.nav.dashboard },
+  { href: "/", label: "ホーム" },
   { href: "/places", label: ja.nav.places },
+  { href: "/categories", label: "カテゴリ一覧" },
   { href: "/review", label: ja.nav.review },
   { href: "/closed", label: ja.nav.closed },
   { href: "/imports", label: ja.nav.imports }
 ];
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const items = navItems.filter((item) => item.href !== "/review" || isAdminEnabled());
+  const adminEnabled = isAdminEnabled();
+  const items = navItems.filter((item) => adminEnabled || !["/review", "/closed", "/imports"].includes(item.href));
   return (
     <html lang="ja">
       <body>
         <div className="min-h-screen">
           <header className="border-b border-stone-300 bg-paper/90">
-            <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+            <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4">
               <Link href="/" className="text-xl font-semibold tracking-normal text-ink">
                 Place Organizer
               </Link>
-              <nav className="flex gap-2 text-sm">
+              <nav className="hidden gap-2 text-sm md:flex">
                 {items.map((item) => (
                   <Link
                     key={item.href}
@@ -39,6 +41,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   </Link>
                 ))}
               </nav>
+              <details className="relative md:hidden">
+                <summary className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-md border border-stone-300 bg-white text-sm font-semibold">
+                  <span className="sr-only">メニュー</span>
+                  <span aria-hidden="true">☰</span>
+                </summary>
+                <nav className="absolute right-0 z-20 mt-2 grid min-w-44 gap-1 rounded-lg border border-stone-300 bg-white p-2 text-sm shadow-lg">
+                  {items.map((item) => (
+                    <Link key={item.href} href={item.href} className="rounded-md px-3 py-2 text-stone-700 hover:bg-paper hover:text-ink">
+                      {item.label}
+                    </Link>
+                  ))}
+                </nav>
+              </details>
             </div>
           </header>
           <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>

@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { ArrowRight, ClipboardCheck, Database, ListChecks, Sparkles, UploadCloud } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
-import { ja, jaSceneTag, jaStatus } from "@/lib/i18n/ja";
+import { ja, jaCategory, jaSceneTag, jaStatus } from "@/lib/i18n/ja";
 import { reviewSourceUrlCandidate } from "@/lib/import/source-url-review";
 import { detectClosedPlace } from "@/lib/places/closed";
 import { safeQuery } from "@/lib/supabase/queries";
@@ -45,15 +45,24 @@ type DashboardData = {
   byEnrichmentStatus: Array<{ enrichment_status: string | null; count: number }>;
   byApiStrategy: Array<{ name: string; count: number }>;
   byRiskFlag: Array<{ name: string; count: number }>;
+  categoryCards: CategoryCardData[];
+};
+
+type CategoryCardData = {
+  category: string;
+  slug: string;
+  total: number;
+  want: number;
+  samples: string[];
 };
 
 export default async function DashboardPage() {
   const adminEnabled = isAdminEnabled();
   const { data, error } = await safeQuery<DashboardData>(
-    { totalPlaces: 0, usablePlaces: 0, googleEnrichedPlaces: 0, sourceUrlConfirmedPlaces: 0, coordinatePointPlaces: 0, needsReviewPlaces: 0, errorPlaces: 0, totalSourceLinks: 0, activeSourceLinks: 0, pendingEnrichment: 0, sourceUrlConflictCount: 0, closedCandidateCount: 0, permanentlyClosedCount: 0, temporarilyClosedCount: 0, archivedPlaces: 0, aiClassifiedCount: 0, manualOverrideCount: 0, otherCategoryCount: 0, missingRegionCount: 0, missingRegionWithAddressCount: 0, otherWithHintCount: 0, otherWithoutHintCount: 0, missingRestaurantSceneCount: 0, latestBatch: null, byCategory: [], byList: [], byRegion: [], bySceneTag: [], byEnrichmentStatus: [], byApiStrategy: [], byRiskFlag: [] },
+    { totalPlaces: 0, usablePlaces: 0, googleEnrichedPlaces: 0, sourceUrlConfirmedPlaces: 0, coordinatePointPlaces: 0, needsReviewPlaces: 0, errorPlaces: 0, totalSourceLinks: 0, activeSourceLinks: 0, pendingEnrichment: 0, sourceUrlConflictCount: 0, closedCandidateCount: 0, permanentlyClosedCount: 0, temporarilyClosedCount: 0, archivedPlaces: 0, aiClassifiedCount: 0, manualOverrideCount: 0, otherCategoryCount: 0, missingRegionCount: 0, missingRegionWithAddressCount: 0, otherWithHintCount: 0, otherWithoutHintCount: 0, missingRestaurantSceneCount: 0, latestBatch: null, byCategory: [], byList: [], byRegion: [], bySceneTag: [], byEnrichmentStatus: [], byApiStrategy: [], byRiskFlag: [], categoryCards: [] },
     async (supabase) => {
       const apiReadySummary = readApiReadySummary();
-      const [places, sourceLinks, activeSourceLinks, pending, latestBatch, classifications, links, enrichmentRows, enrichedRows, closedRows, gapRows] = await Promise.all([
+      const [places, sourceLinks, activeSourceLinks, pending, latestBatch, classifications, links, enrichmentRows, enrichedRows, closedRows, gapRows, categoryRows] = await Promise.all([
         supabase.from("places").select("id", { count: "exact", head: true }),
         supabase.from("source_links").select("id", { count: "exact", head: true }),
         supabase.from("source_links").select("id", { count: "exact", head: true }).eq("active", true),
@@ -64,7 +73,8 @@ export default async function DashboardPage() {
         fetchAllRows<{ enrichment_status: string | null }>(supabase, "places", "enrichment_status"),
         fetchAllRows<SourceUrlConflictRow>(supabase, "places", "name, latitude, longitude, google_maps_url, raw_import, raw_google", { enrichment_status: "enriched" }),
         fetchClosedDashboardRows(supabase),
-        fetchGapDashboardRows(supabase)
+        fetchGapDashboardRows(supabase),
+        fetchCategoryCardRows(supabase)
       ]);
       const activeClosedRows = closedRows.filter((row) => row.is_archived !== true).map((row) => detectClosedPlace(row)).filter(Boolean);
       const statusCounts = countStatuses(enrichmentRows);
@@ -103,7 +113,8 @@ export default async function DashboardPage() {
         bySceneTag: groupSceneTags(classifications),
         byEnrichmentStatus: orderedStatusRows(enrichmentRows),
         byApiStrategy: objectRows(apiReadySummary.by_api_strategy),
-        byRiskFlag: objectRows(apiReadySummary.risk_flag_counts)
+        byRiskFlag: objectRows(apiReadySummary.risk_flag_counts),
+        categoryCards: buildCategoryCards(categoryRows)
       };
     }
   );
@@ -133,6 +144,31 @@ export default async function DashboardPage() {
       </section>
 
       {error ? <SetupNotice error={error} /> : null}
+
+      <section>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold">カテゴリから探す</h2>
+          <Link href="/categories" className="text-sm font-semibold text-moss">すべて見る</Link>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {data.categoryCards.map((card) => (
+            <Link key={card.slug} href={`/category/${card.slug}`} className="rounded-lg border border-stone-300 bg-white p-4 hover:border-moss">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-xl font-semibold">{jaCategory(card.category)}</h3>
+                  <p className="mt-1 text-sm text-stone-600">行ってみたい {card.want} / 全 {card.total}</p>
+                </div>
+                <ArrowRight className="mt-1 h-5 w-5 text-moss" />
+              </div>
+              <div className="mt-4 space-y-2">
+                {card.samples.map((sample) => (
+                  <div key={sample} className="truncate rounded-md bg-paper px-3 py-2 text-sm text-stone-800">{sample}</div>
+                ))}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       <section className="grid gap-3 md:grid-cols-5">
         <StatCard label={ja.dashboard.totalPlaces} value={data.totalPlaces} icon={<Database className="h-5 w-5" />} />
@@ -187,10 +223,10 @@ export default async function DashboardPage() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
-        <QuickLink href="/closed" title={ja.dashboard.closedCandidates} />
+        {adminEnabled ? <QuickLink href="/closed" title={ja.dashboard.closedCandidates} /> : null}
         {adminEnabled ? <QuickLink href="/review" title={ja.dashboard.reviewPlaces} /> : null}
         <QuickLink href="/places" title={ja.dashboard.browsePlaces} />
-        <QuickLink href="/imports" title={ja.dashboard.importHistory} />
+        {adminEnabled ? <QuickLink href="/imports" title={ja.dashboard.importHistory} /> : null}
       </section>
     </div>
   );
@@ -321,6 +357,23 @@ type GapDashboardRow = {
   } | null;
 };
 
+type CategoryCardRow = {
+  id: string;
+  name: string;
+  is_archived?: boolean | null;
+  source_links?: Array<{ source_list_name: string | null; active: boolean | null }>;
+  place_classifications?: Array<{ main_category: string | null }>;
+};
+
+const DASHBOARD_CATEGORY_CARDS = [
+  ["restaurant", "Restaurant"],
+  ["cafe", "Cafe"],
+  ["art", "Art"],
+  ["fashion", "Fashion"],
+  ["hotel", "Hotel"],
+  ["bath", "Bath"]
+] as const;
+
 function isMissing(value: unknown) {
   if (value === null || value === undefined) return true;
   const text = String(value).trim();
@@ -343,6 +396,34 @@ async function fetchGapDashboardRows(supabase: ReturnType<typeof getSupabaseRead
     source_links: Array.isArray(row.source_links) ? row.source_links as GapDashboardRow["source_links"] : [],
     classification: firstDashboardClassification(row.place_classifications)
   }));
+}
+
+async function fetchCategoryCardRows(supabase: ReturnType<typeof getSupabaseRead>) {
+  return await fetchAllRows<CategoryCardRow>(
+    supabase,
+    "places",
+    "id, name, is_archived, source_links(source_list_name, active), place_classifications(main_category)"
+  );
+}
+
+function buildCategoryCards(rows: CategoryCardRow[]): CategoryCardData[] {
+  const activeRows = rows.filter((row) => row.is_archived !== true);
+  return DASHBOARD_CATEGORY_CARDS.map(([slug, category]) => {
+    const places = activeRows
+      .filter((row) => firstDashboardClassification(row.place_classifications)?.main_category === category)
+      .sort((a, b) => Number(isDashboardWantToGo(b)) - Number(isDashboardWantToGo(a)) || String(a.name ?? "").localeCompare(String(b.name ?? ""), "ja"));
+    return {
+      slug,
+      category,
+      total: places.length,
+      want: places.filter(isDashboardWantToGo).length,
+      samples: places.slice(0, 3).map((place) => String(place.name ?? "")).filter(Boolean)
+    };
+  });
+}
+
+function isDashboardWantToGo(row: CategoryCardRow) {
+  return Array.isArray(row.source_links) && row.source_links.some((link) => link.active !== false && String(link.source_list_name ?? "").includes("行ってみたい"));
 }
 
 function firstDashboardClassification(value: unknown): GapDashboardRow["classification"] {

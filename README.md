@@ -13,6 +13,20 @@ Googleマップの保存リストCSVをSupabaseに投入し、Webアプリで閲
 
 `/import` は開発者向けの手動アップロード画面として残していますが、通常はseed scriptを使います。
 
+## Public UI
+
+本番公開では、閲覧ページをSupabase anon keyで読みます。`SUPABASE_SERVICE_ROLE_KEY` はVercelに入れません。
+
+- `/` は指標とカテゴリ入口のダッシュボードです。
+- `/places` は全体検索です。検索、カテゴリ、行ってみたいのシンプルな条件に絞っています。
+- `/categories` と `/category/[slug]` がカテゴリ別探索の中心です。
+- `/category/restaurant` ではシーン、価格帯、地域で絞り込めます。
+- `/category/art` では Museum / Gallery などのサブカテゴリで絞り込めます。
+- `/category/fashion` と `/category/cafe` では `category_tags` があるものだけタグフィルタできます。
+- Googleマップで開くボタンは元CSV Google Maps URLを優先します。
+
+`NEXT_PUBLIC_ENABLE_ADMIN=false` の本番公開環境では、レビュー、閉業候補、取込履歴、編集、アーカイブ、AI分類などの管理系導線は非表示になります。書き込みAPIも403になります。
+
 ## Google Maps URL Source of Truth
 
 Place Organizerでは、Google Takeout / CSVに含まれる元Google Maps URLを正とします。
