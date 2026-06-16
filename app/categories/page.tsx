@@ -38,7 +38,7 @@ function CategoryCard({ slug, places }: { slug: CategorySlug; places: PlaceRow[]
   const categoryPlaces = sortRecommended(places.filter((place) => String(firstRelated(place.place_classifications)?.main_category ?? "Other") === category));
   const wantCount = categoryPlaces.filter(isWantToGo).length;
   return (
-    <Link href={`/category/${slug}`} className="block rounded-lg border border-moss bg-white p-4 transition-colors hover:bg-paper active:bg-paper">
+    <Link href={`/category/${slug}`} className="block rounded-lg border border-line bg-white p-4 transition-colors hover:bg-paper/60 active:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-moss/50">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
