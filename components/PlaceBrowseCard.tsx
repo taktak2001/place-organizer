@@ -20,8 +20,8 @@ export function PlaceBrowseCard({ place, mode = "general" }: Props) {
   const restaurantSceneTags = category === "Restaurant" ? sceneTags(classification) : [];
   const tags = category === "Restaurant" ? [] : displayTags(category, classification);
   const mapsHref = preferredGoogleMapsUrl({
+    placeGoogleMapsUrl: sourceLinkUrl(links) ?? place.google_maps_url,
     rawGoogle: place.raw_google,
-    placeGoogleMapsUrl: place.google_maps_url,
     rawImport: place.raw_import,
     latitude: place.latitude,
     longitude: place.longitude
@@ -145,6 +145,14 @@ function tagClass(category: string) {
 function sourceListLabel(links: Record<string, unknown>[]) {
   const names = links.map((link) => String(link.source_list_name ?? "").trim()).filter(Boolean);
   return names.length > 0 ? names.join(" / ") : null;
+}
+
+function sourceLinkUrl(links: Record<string, unknown>[]) {
+  for (const link of links) {
+    const url = String(link.source_url ?? "").trim();
+    if (url) return url;
+  }
+  return null;
 }
 
 function displayRegionLabel(place: PlaceRow, classification: Record<string, unknown> | null) {

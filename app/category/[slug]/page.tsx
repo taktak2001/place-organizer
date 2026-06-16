@@ -2,12 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
-import { PlaceBrowseCard } from "@/components/PlaceBrowseCard";
-import { classifyDisplayRegion, REGION_FILTER_SECTIONS } from "@/lib/classification/display-region";
+import { InfinitePlaceList } from "@/components/InfinitePlaceList";
+import { REGION_FILTER_SECTIONS } from "@/lib/classification/display-region";
 import { RESTAURANT_CUISINE_TAGS } from "@/lib/classification/restaurant-cuisine";
 import { jaCategory, jaCategoryTag, jaDisplay, jaSceneTag } from "@/lib/i18n/ja";
-import { categoryFromSlug, categoryTags, fetchAllPlaces, firstRelated, isWantToGo, matchesArchive, matchesText, PAGE_SIZE, RESTAURANT_PRICE_BANDS, restaurantPriceBand, restaurantPriceBandLabel, sceneTags, sortRecommended, type PlaceRow } from "@/lib/places/browse";
-import { safeQuery } from "@/lib/supabase/queries";
+import { categoryFromSlug, RESTAURANT_PRICE_BANDS, restaurantPriceBandLabel } from "@/lib/places/browse";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -25,16 +24,7 @@ export default async function CategoryPage({ params, searchParams }: { params: {
   if (!category) notFound();
 
   const filters = normalizeSearchParams(searchParams);
-  const { data: places, error } = await safeQuery<PlaceRow[]>([], fetchAllPlaces, "getCategoryPlaces");
-  const categoryPlaces = places.filter((place) => matchesArchive(place) && String(firstRelated(place.place_classifications)?.main_category ?? "Other") === category);
-  const filtered = sortRecommended(categoryPlaces.filter((place) => placeMatches(place, category, filters)));
-  const page = Math.min(filters.page, Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)));
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const visiblePlaces = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const wantCount = categoryPlaces.filter(isWantToGo).length;
-  const wantToggleHref = buildUrl(params.slug, { ...filters, want: !filters.want, page: 1 });
-  const cuisineCounts = category === "Restaurant" ? countTags(categoryPlaces.flatMap((place) => categoryTags(firstRelated(place.place_classifications)))) : {};
-  const availableRegionLabels = new Set(categoryPlaces.map(displayRegionLabel).filter((label) => label && label !== "未分類"));
+  const wantToggleHref = buildUrl(params.slug, { ...filters, want: !filters.want });
 
   return (
     <div className="space-y-5">
@@ -47,10 +37,8 @@ export default async function CategoryPage({ params, searchParams }: { params: {
           </span>
           <h1 className="text-3xl font-semibold">{jaCategory(category)}</h1>
         </div>
-        <p className="mt-2 text-sm text-stone-700">行ってみたい {wantCount} / 全 {categoryPlaces.length}</p>
+        <p className="mt-2 text-sm text-stone-700">初期表示30件、スクロールで追加表示します。</p>
       </header>
-
-      {error ? <pre className="whitespace-pre-wrap rounded-lg border border-clay bg-white p-4 text-sm text-stone-700">{error}</pre> : null}
 
       <form className="rounded-lg border border-line bg-white p-4">
         <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
@@ -83,49 +71,15 @@ export default async function CategoryPage({ params, searchParams }: { params: {
             {category === "Art" ? <CheckboxGroup name="sub_category" label="サブカテゴリ" values={ART_SUB_CATEGORIES} selected={filters.sub_category} labeler={jaDisplay} /> : null}
             {category === "Fashion" ? <CheckboxGroup name="category_tags" label="ジャンル" values={FASHION_TAGS} selected={filters.category_tags} labeler={jaCategoryTag} /> : null}
             {category === "Cafe" ? <CheckboxGroup name="category_tags" label="タグ" values={CAFE_TAGS} selected={filters.category_tags} labeler={jaCategoryTag} /> : null}
-            <RegionChipGroup selected={filters.region_filter_label} availableLabels={availableRegionLabels} />
+            <RegionChipGroup selected={filters.region_filter_label} />
             {category === "Restaurant" ? <SelectFilter name="price_level" label="価格帯" value={filters.price_level} options={[...RESTAURANT_PRICE_BANDS]} labeler={restaurantPriceBandLabel} /> : null}
           </div>
         </details>
       </form>
 
-      {category === "Restaurant" ? (
-        <section className="rounded-lg border border-line bg-white p-4">
-          <h2 className="text-sm font-semibold text-ink">料理ジャンル別件数</h2>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {Object.entries(cuisineCounts).length > 0 ? Object.entries(cuisineCounts).slice(0, 12).map(([tag, count]) => (
-              <span key={tag} className="rounded-md bg-paper px-2 py-1 text-xs font-medium text-stone-800">
-                {jaCategoryTag(tag)} <span className="text-stone-500">{count}</span>
-              </span>
-            )) : <span className="text-sm text-stone-500">まだ料理ジャンルがありません</span>}
-          </div>
-        </section>
-      ) : null}
-
-      <div className="rounded-lg border border-line bg-white p-4 text-sm text-stone-700">
-        絞り込み結果: <span className="font-semibold text-ink">{filtered.length}</span>件
-      </div>
-
-      <div className="grid gap-3">
-        {visiblePlaces.map((place) => <PlaceBrowseCard key={String(place.id)} place={place} mode="category" />)}
-        {visiblePlaces.length === 0 ? <div className="rounded-lg border border-line bg-white p-6 text-sm text-stone-600">場所が見つかりません</div> : null}
-      </div>
-
-      <Pagination page={page} totalPages={totalPages} filters={filters} slug={params.slug} />
+      <InfinitePlaceList endpoint={`/api/category/${params.slug}/places`} params={filtersToApiParams(filters)} mode="category" />
     </div>
   );
-}
-
-function placeMatches(place: PlaceRow, category: string, filters: ReturnType<typeof normalizeSearchParams>) {
-  const classification = firstRelated(place.place_classifications);
-  return matchesText(filters.search, [place.name, place.address, classification?.area_label, classification?.travel_region].join(" ")) &&
-    (!filters.want || isWantToGo(place)) &&
-    (filters.region_filter_label.length === 0 || filters.region_filter_label.includes(displayRegionLabel(place))) &&
-    (filters.price_level === "" || restaurantPriceBand(place, classification) === filters.price_level) &&
-    (filters.scene_tags.length === 0 || filters.scene_tags.some((tag) => sceneTags(classification).includes(tag))) &&
-    (filters.sub_category.length === 0 || filters.sub_category.includes(String(classification?.sub_category ?? ""))) &&
-    (filters.category_tags.length === 0 || filters.category_tags.some((tag) => categoryTags(classification).includes(tag))) &&
-    category.length > 0;
 }
 
 function CheckboxGroup({ name, label, values, selected, labeler, tone = "default" }: { name: string; label: string; values: string[]; selected: string[]; labeler: (value: unknown) => string; tone?: "default" | "cuisine" | "scene" }) {
@@ -144,14 +98,13 @@ function CheckboxGroup({ name, label, values, selected, labeler, tone = "default
   );
 }
 
-function RegionChipGroup({ selected, availableLabels }: { selected: string[]; availableLabels: Set<string> }) {
+function RegionChipGroup({ selected }: { selected: string[] }) {
   return (
     <fieldset className="md:col-span-4">
       <legend className="text-xs font-medium uppercase text-stone-600">地域</legend>
       <div className="mt-1 space-y-3 rounded-md border border-line bg-white p-3">
         {REGION_FILTER_SECTIONS.map((section) => {
-          const labels = section.labels.filter((label) => availableLabels.has(label) || selected.includes(label));
-          if (labels.length === 0) return null;
+          const labels = section.labels;
           return (
             <div key={section.group}>
               <div className="mb-2 text-xs font-semibold text-stone-600">{section.title}</div>
@@ -194,20 +147,7 @@ function SelectFilter({ name, label, value, options, labeler }: { name: string; 
   );
 }
 
-function Pagination({ page, totalPages, filters, slug }: { page: number; totalPages: number; filters: ReturnType<typeof normalizeSearchParams>; slug: string }) {
-  const previous = page > 1 ? buildUrl(slug, { ...filters, page: page - 1 }) : null;
-  const next = page < totalPages ? buildUrl(slug, { ...filters, page: page + 1 }) : null;
-  return (
-    <div className="flex items-center justify-between">
-      {previous ? <Link href={previous} className="rounded-md border border-line bg-white px-4 py-2 text-sm font-medium">前へ</Link> : <span />}
-      <span className="text-sm text-stone-600">{page}/{totalPages}</span>
-      {next ? <Link href={next} className="rounded-md border border-line bg-white px-4 py-2 text-sm font-medium">もっと見る</Link> : <span />}
-    </div>
-  );
-}
-
 function normalizeSearchParams(searchParams: SearchParams) {
-  const page = Number(valueOf(searchParams.page));
   return {
     search: valueOf(searchParams.search),
     want: valueOf(searchParams.want) === "1",
@@ -215,8 +155,7 @@ function normalizeSearchParams(searchParams: SearchParams) {
     sub_category: valuesOf(searchParams.sub_category),
     category_tags: valuesOf(searchParams.category_tags),
     region_filter_label: valuesOf(searchParams.region_filter_label),
-    price_level: valueOf(searchParams.price_level),
-    page: Number.isFinite(page) && page > 0 ? Math.floor(page) : 1
+    price_level: valueOf(searchParams.price_level)
   };
 }
 
@@ -229,9 +168,20 @@ function buildUrl(slug: string, filters: ReturnType<typeof normalizeSearchParams
   for (const tag of filters.category_tags) params.append("category_tags", tag);
   for (const label of filters.region_filter_label) params.append("region_filter_label", label);
   if (filters.price_level) params.set("price_level", filters.price_level);
-  if (filters.page > 1) params.set("page", String(filters.page));
   const query = params.toString();
   return query ? `/category/${slug}?${query}` : `/category/${slug}`;
+}
+
+function filtersToApiParams(filters: ReturnType<typeof normalizeSearchParams>) {
+  return {
+    search: filters.search,
+    want: filters.want,
+    scene_tags: filters.scene_tags,
+    sub_category: filters.sub_category,
+    category_tags: filters.category_tags,
+    region_filter_label: filters.region_filter_label,
+    price_level: filters.price_level
+  };
 }
 
 function valueOf(value: string | string[] | undefined) {
@@ -241,44 +191,4 @@ function valueOf(value: string | string[] | undefined) {
 function valuesOf(value: string | string[] | undefined) {
   if (Array.isArray(value)) return value.filter(Boolean);
   return value ? [value] : [];
-}
-
-function countTags(tags: string[]) {
-  const counts = new Map<string, number>();
-  for (const tag of tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
-  return Object.fromEntries([...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ja")));
-}
-
-function displayRegionLabel(place: PlaceRow) {
-  const classification = firstRelated(place.place_classifications);
-  const existing = String(classification?.region_filter_label ?? "").trim();
-  if (existing) return existing;
-  return classifyDisplayRegion({
-    country: stringOrNull(classification?.country),
-    prefecture: stringOrNull(classification?.prefecture),
-    city: stringOrNull(classification?.city),
-    ward: stringOrNull(classification?.ward),
-    area_label: stringOrNull(classification?.area_label),
-    travel_region: stringOrNull(classification?.travel_region),
-    address: stringOrNull(place.address),
-    raw_google_summary: rawGoogleSummary(place.raw_google)
-  }).region_filter_label;
-}
-
-function rawGoogleSummary(rawGoogle: unknown) {
-  if (typeof rawGoogle !== "object" || rawGoogle === null) return null;
-  const raw = rawGoogle as Record<string, unknown>;
-  const candidate = typeof raw.candidate_place === "object" && raw.candidate_place !== null ? raw.candidate_place as Record<string, unknown> : null;
-  const source = candidate ?? raw;
-  return {
-    displayName: source.displayName,
-    name: source.name,
-    formattedAddress: source.formattedAddress ?? source.formatted_address ?? null,
-    address: source.address ?? null
-  };
-}
-
-function stringOrNull(value: unknown) {
-  const text = String(value ?? "").trim();
-  return text ? text : null;
 }
