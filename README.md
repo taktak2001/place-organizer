@@ -20,7 +20,7 @@ Googleマップの保存リストCSVをSupabaseに投入し、Webアプリで閲
 - `/` は指標とカテゴリ入口のダッシュボードです。
 - `/places` は全体検索です。検索、カテゴリ、行ってみたいのシンプルな条件に絞っています。
 - `/categories` と `/category/[slug]` がカテゴリ別探索の中心です。
-- `/category/restaurant` ではシーン、価格帯、地域で絞り込めます。
+- `/category/restaurant` では料理ジャンル、利用シーン、地域、価格帯で絞り込めます。料理ジャンルは `category_tags`、利用シーンは `scene_tags` として別軸で扱います。
 - `/category/art` では Museum / Gallery などのサブカテゴリで絞り込めます。
 - `/category/fashion` と `/category/cafe` では `category_tags` があるものだけタグフィルタできます。
 - Googleマップで開くボタンは元CSV Google Maps URLを優先します。
@@ -121,6 +121,19 @@ npm run classify:ai -- --apply --only-missing-region --limit 20
 - `--apply` を付けた場合のみDBに保存します。
 - `--force` を付けた場合のみ手動優先の分類も上書き対象にできます。
 - ログは件数中心にし、個別の場所名・住所・URLは大量出力しません。
+
+Restaurantの料理ジャンルはルールベースで `category_tags` に保存します。`scene_tags` はデート、会食、一人などの利用シーン専用です。
+
+```bash
+npm run classify:restaurant-cuisine -- --dry-run
+npm run classify:restaurant-cuisine -- --dry-run --limit 100
+npm run classify:restaurant-cuisine -- --apply
+npm run classify:restaurant-cuisine -- --apply --force
+```
+
+- Italian / Sushi / Ramen / Pizza などの料理ジャンルを推定します。
+- `manual_override=true` の分類は通常上書きしません。
+- Googleマップで開くボタンは引き続き元CSV Google Maps URLを優先します。
 
 ## Supabase Setup
 

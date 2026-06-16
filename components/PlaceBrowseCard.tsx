@@ -13,7 +13,9 @@ export function PlaceBrowseCard({ place, mode = "general" }: Props) {
   const classification = firstRelated(place.place_classifications);
   const category = String(classification?.main_category ?? "Other");
   const links = activeLinks(place.source_links);
-  const tags = displayTags(category, classification);
+  const cuisineTags = category === "Restaurant" ? categoryTags(classification) : [];
+  const restaurantSceneTags = category === "Restaurant" ? sceneTags(classification) : [];
+  const tags = category === "Restaurant" ? [] : displayTags(category, classification);
   const mapsHref = preferredGoogleMapsUrl({
     rawGoogle: place.raw_google,
     placeGoogleMapsUrl: place.google_maps_url,
@@ -38,6 +40,16 @@ export function PlaceBrowseCard({ place, mode = "general" }: Props) {
           {links.map((link) => (
             <span key={String(link.id ?? `${place.id}-${link.source_list_name}`)} className="rounded-md border border-stone-300 px-2 py-0.5 text-xs">
               {jaDisplay(link.source_list_name)}
+            </span>
+          ))}
+          {cuisineTags.map((tag) => (
+            <span key={`cuisine-${tag}`} className="rounded-md bg-paper px-2 py-0.5 text-xs font-medium text-stone-800">
+              {jaCategoryTag(tag)}
+            </span>
+          ))}
+          {restaurantSceneTags.map((tag) => (
+            <span key={`scene-${tag}`} className="rounded-md bg-moss/10 px-2 py-0.5 text-xs font-medium text-moss">
+              {jaSceneTag(tag)}
             </span>
           ))}
           {tags.map((tag) => (

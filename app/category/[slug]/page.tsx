@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { PlaceBrowseCard } from "@/components/PlaceBrowseCard";
+import { RESTAURANT_CUISINE_TAGS } from "@/lib/classification/restaurant-cuisine";
 import { jaCategory, jaCategoryTag, jaDisplay, jaSceneTag } from "@/lib/i18n/ja";
 import { categoryFromSlug, categoryTags, fetchAllPlaces, firstRelated, isWantToGo, matchesArchive, matchesText, PAGE_SIZE, priceLevelLabel, sceneTags, sortRecommended, uniqueOptions, type PlaceRow } from "@/lib/places/browse";
 import { safeQuery } from "@/lib/supabase/queries";
@@ -32,6 +33,7 @@ export default async function CategoryPage({ params, searchParams }: { params: {
   const areaOptions = uniqueOptions(categoryPlaces.map((place) => firstRelated(place.place_classifications)?.area_label));
   const wantCount = categoryPlaces.filter(isWantToGo).length;
   const wantToggleHref = buildUrl(params.slug, { ...filters, want: !filters.want, page: 1 });
+  const cuisineCounts = category === "Restaurant" ? countTags(categoryPlaces.flatMap((place) => categoryTags(firstRelated(place.place_classifications)))) : {};
 
   return (
     <div className="space-y-5">
@@ -70,16 +72,31 @@ export default async function CategoryPage({ params, searchParams }: { params: {
             詳細フィルタ
           </summary>
           <div className="mt-3 grid gap-3 md:grid-cols-4">
-            {category === "Restaurant" ? <CheckboxGroup name="scene_tags" label="利用シーン" values={SCENE_TAGS} selected={filters.scene_tags} labeler={jaSceneTag} /> : null}
+            {category === "Restaurant" ? <CheckboxGroup name="category_tags" label="料理ジャンル" values={[...RESTAURANT_CUISINE_TAGS]} selected={filters.category_tags} labeler={jaCategoryTag} tone="cuisine" /> : null}
+            {category === "Restaurant" ? <CheckboxGroup name="scene_tags" label="利用シーン" values={SCENE_TAGS} selected={filters.scene_tags} labeler={jaSceneTag} tone="scene" /> : null}
+            {category === "Restaurant" ? <SelectFilter name="travel_region" label="地域" value={filters.travel_region} options={regionOptions} labeler={jaDisplay} /> : null}
             {category === "Restaurant" ? <SelectFilter name="price_level" label="価格帯" value={filters.price_level} options={["1", "2", "3", "4"]} labeler={priceLevelLabel} /> : null}
             {category === "Art" ? <CheckboxGroup name="sub_category" label="サブカテゴリ" values={ART_SUB_CATEGORIES} selected={filters.sub_category} labeler={jaDisplay} /> : null}
             {category === "Fashion" ? <CheckboxGroup name="category_tags" label="ジャンル" values={FASHION_TAGS} selected={filters.category_tags} labeler={jaCategoryTag} /> : null}
             {category === "Cafe" ? <CheckboxGroup name="category_tags" label="タグ" values={CAFE_TAGS} selected={filters.category_tags} labeler={jaCategoryTag} /> : null}
-            <SelectFilter name="travel_region" label="旅行地域" value={filters.travel_region} options={regionOptions} labeler={jaDisplay} />
+            {category !== "Restaurant" ? <SelectFilter name="travel_region" label="旅行地域" value={filters.travel_region} options={regionOptions} labeler={jaDisplay} /> : null}
             <SelectFilter name="area_label" label="エリア" value={filters.area_label} options={areaOptions} labeler={jaDisplay} />
           </div>
         </details>
       </form>
+
+      {category === "Restaurant" ? (
+        <section className="rounded-lg border border-stone-300 bg-white p-4">
+          <h2 className="text-sm font-semibold text-ink">料理ジャンル別件数</h2>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {Object.entries(cuisineCounts).length > 0 ? Object.entries(cuisineCounts).slice(0, 12).map(([tag, count]) => (
+              <span key={tag} className="rounded-md bg-paper px-2 py-1 text-xs font-medium text-stone-800">
+                {jaCategoryTag(tag)} <span className="text-stone-500">{count}</span>
+              </span>
+            )) : <span className="text-sm text-stone-500">まだ料理ジャンルがありません</span>}
+          </div>
+        </section>
+      ) : null}
 
       <div className="rounded-lg border border-stone-300 bg-white p-4 text-sm text-stone-700">
         絞り込み結果: <span className="font-semibold text-ink">{filtered.length}</span>件
@@ -102,19 +119,19 @@ function placeMatches(place: PlaceRow, category: string, filters: ReturnType<typ
     (!filters.travel_region || String(classification?.travel_region ?? "") === filters.travel_region) &&
     (!filters.area_label || String(classification?.area_label ?? "") === filters.area_label) &&
     (filters.price_level === "" || String(place.price_level ?? "") === filters.price_level) &&
-    (filters.scene_tags.length === 0 || filters.scene_tags.every((tag) => sceneTags(classification).includes(tag))) &&
+    (filters.scene_tags.length === 0 || filters.scene_tags.some((tag) => sceneTags(classification).includes(tag))) &&
     (filters.sub_category.length === 0 || filters.sub_category.includes(String(classification?.sub_category ?? ""))) &&
-    (filters.category_tags.length === 0 || filters.category_tags.every((tag) => categoryTags(classification).includes(tag))) &&
+    (filters.category_tags.length === 0 || filters.category_tags.some((tag) => categoryTags(classification).includes(tag))) &&
     category.length > 0;
 }
 
-function CheckboxGroup({ name, label, values, selected, labeler }: { name: string; label: string; values: string[]; selected: string[]; labeler: (value: unknown) => string }) {
+function CheckboxGroup({ name, label, values, selected, labeler, tone = "default" }: { name: string; label: string; values: string[]; selected: string[]; labeler: (value: unknown) => string; tone?: "default" | "cuisine" | "scene" }) {
   return (
     <fieldset className="md:col-span-2">
       <legend className="text-xs font-medium uppercase text-stone-600">{label}</legend>
       <div className="mt-1 flex min-h-10 flex-wrap gap-2 rounded-md border border-stone-300 bg-white px-2 py-2">
         {values.map((value) => (
-          <label key={value} className="inline-flex items-center gap-1 rounded-md bg-paper px-2 py-1 text-xs text-stone-800">
+          <label key={value} className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs ${checkboxToneClass(tone, selected.includes(value))}`}>
             <input type="checkbox" name={name} value={value} defaultChecked={selected.includes(value)} />
             {labeler(value)}
           </label>
@@ -122,6 +139,12 @@ function CheckboxGroup({ name, label, values, selected, labeler }: { name: strin
       </div>
     </fieldset>
   );
+}
+
+function checkboxToneClass(tone: "default" | "cuisine" | "scene", selected: boolean) {
+  if (tone === "scene") return selected ? "bg-moss text-white" : "bg-moss/10 text-moss";
+  if (tone === "cuisine") return selected ? "bg-clay text-white" : "bg-paper text-stone-800";
+  return selected ? "bg-ink text-white" : "bg-paper text-stone-800";
 }
 
 function SelectFilter({ name, label, value, options, labeler }: { name: string; label: string; value: string; options: string[]; labeler: (value: unknown) => string }) {
@@ -187,4 +210,10 @@ function valueOf(value: string | string[] | undefined) {
 function valuesOf(value: string | string[] | undefined) {
   if (Array.isArray(value)) return value.filter(Boolean);
   return value ? [value] : [];
+}
+
+function countTags(tags: string[]) {
+  const counts = new Map<string, number>();
+  for (const tag of tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+  return Object.fromEntries([...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ja")));
 }

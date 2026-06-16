@@ -23,7 +23,8 @@
     "list:closed": "tsx scripts/list-closed-places.ts",
     "archive:closed": "tsx scripts/archive-closed-places.ts",
     "classify:ai": "tsx scripts/ai-classify-places.ts",
-    "classify:restaurant-scenes": "tsx scripts/classify-restaurant-scenes.ts"
+    "classify:restaurant-scenes": "tsx scripts/classify-restaurant-scenes.ts",
+    "classify:restaurant-cuisine": "tsx scripts/classify-restaurant-cuisine.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
