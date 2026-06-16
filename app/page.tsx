@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Database, ListChecks } from "lucide-react";
-import { StatCard } from "@/components/StatCard";
+import { ArrowRight, ListChecks } from "lucide-react";
 import { ja, jaCategory } from "@/lib/i18n/ja";
 import { safeQuery, type SafeSupabaseError } from "@/lib/supabase/queries";
 import type { getSupabaseRead } from "@/lib/supabase/server";
@@ -59,8 +58,8 @@ export default async function HomePage() {
       <section className="flex flex-col gap-5 border-b border-stone-300 pb-8 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-sm font-medium uppercase text-moss">{ja.dashboard.eyebrow}</p>
-          <h1 className="mt-1 text-3xl font-semibold">{ja.dashboard.title}</h1>
-          <p className="mt-3 max-w-3xl text-stone-700">{ja.dashboard.description}</p>
+          <h1 className="mt-1 text-3xl font-semibold">保存場所を探す</h1>
+          <p className="mt-2 max-w-2xl text-sm text-stone-700">カテゴリから素早く探して、元Googleマップリンクを開けます。</p>
         </div>
         <Link href="/places" className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-moss px-5 text-sm font-semibold text-white lg:h-11">
           <ListChecks className="h-4 w-4" />
@@ -70,15 +69,9 @@ export default async function HomePage() {
 
       {error ? <HomeError error={error} /> : null}
 
-      <section className="grid gap-3 sm:grid-cols-2">
-        <StatCard label={ja.dashboard.totalPlaces} value={data.totalAvailablePlaces} icon={<Database className="h-5 w-5" />} />
-        <Link href="/categories" className="rounded-lg border border-stone-300 bg-white p-4 hover:border-moss">
-          <div className="flex items-center justify-between gap-3 text-sm text-stone-600">
-            <span>カテゴリ一覧</span>
-            <ArrowRight className="h-4 w-4 text-moss" />
-          </div>
-          <div className="mt-2 text-2xl font-semibold text-ink">探す</div>
-        </Link>
+      <section className="rounded-lg border border-stone-300 bg-white p-3">
+        <div className="text-xs font-medium uppercase text-stone-600">利用可能な場所</div>
+        <div className="mt-1 text-2xl font-semibold text-ink">{data.totalAvailablePlaces}</div>
       </section>
 
       <section>
@@ -111,32 +104,36 @@ export default async function HomePage() {
 }
 
 async function getPublicHomeSummary(supabase: ReturnType<typeof getSupabaseRead>): Promise<HomeData> {
-  const [places, classifications, wantLinks] = await Promise.all([
-    namedQuery<PlaceSummaryRow[]>(
+  const [availableCount, places, classifications, wantLinks] = await Promise.all([
+    countQuery(
+      "home.availablePlacesCount",
+      () => supabase.from("places").select("id", { count: "exact", head: true }).or("is_archived.is.null,is_archived.eq.false")
+    ),
+    fetchPagedRows<PlaceSummaryRow>(
       "home.availablePlaces",
-      () => supabase.from("places").select("id, name, is_archived")
+      (from, to) => supabase.from("places").select("id, name, is_archived").or("is_archived.is.null,is_archived.eq.false").range(from, to)
     ),
-    namedQuery<ClassificationSummaryRow[]>(
+    fetchPagedRows<ClassificationSummaryRow>(
       "home.classifications",
-      () => supabase.from("place_classifications").select("place_id, main_category")
+      (from, to) => supabase.from("place_classifications").select("place_id, main_category").range(from, to)
     ),
-    namedQuery<SourceLinkSummaryRow[]>(
+    fetchPagedRows<SourceLinkSummaryRow>(
       "home.wantSourceLinks",
-      () => supabase.from("source_links").select("place_id").eq("active", true).ilike("source_list_name", "%行ってみたい%")
+      (from, to) => supabase.from("source_links").select("place_id").eq("active", true).ilike("source_list_name", "%行ってみたい%").range(from, to)
     )
   ]);
 
-  const availablePlaces = (places.data ?? []).filter((place) => place.is_archived !== true);
+  const availablePlaces = places.filter((place) => place.is_archived !== true);
   const availableById = new Map(availablePlaces.map((place) => [place.id, place]));
   const categoryByPlaceId = new Map(
-    (classifications.data ?? [])
+    classifications
       .filter((row) => availableById.has(row.place_id))
       .map((row) => [row.place_id, row.main_category ?? "Other"])
   );
-  const wantIds = new Set((wantLinks.data ?? []).map((link) => link.place_id).filter(Boolean));
+  const wantIds = new Set(wantLinks.map((link) => link.place_id).filter(Boolean));
 
   return {
-    totalAvailablePlaces: availablePlaces.length,
+    totalAvailablePlaces: availableCount,
     categoryCards: PUBLIC_HOME_CATEGORIES.map(([slug, category]) => {
       const categoryPlaces = availablePlaces
         .filter((place) => categoryByPlaceId.get(place.id) === category)
@@ -152,19 +149,32 @@ async function getPublicHomeSummary(supabase: ReturnType<typeof getSupabaseRead>
   };
 }
 
-async function namedQuery<T>(queryName: string, query: () => PromiseLike<{ data: T | null; error: unknown }>) {
+async function countQuery(queryName: string, query: () => PromiseLike<{ count: number | null; error: unknown }>) {
   const result = await query();
-  if (result.error) {
-    const error = typeof result.error === "object" && result.error !== null ? result.error as Record<string, unknown> : {};
-    throw {
-      query: queryName,
-      message: typeof error.message === "string" ? error.message : String(result.error),
-      code: typeof error.code === "string" ? error.code : undefined,
-      details: typeof error.details === "string" ? error.details : undefined,
-      hint: typeof error.hint === "string" ? error.hint : undefined
-    } satisfies SafeSupabaseError;
+  if (result.error) throw toSafeQueryError(queryName, result.error);
+  return result.count ?? 0;
+}
+
+async function fetchPagedRows<T>(queryName: string, query: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>) {
+  const rows: T[] = [];
+  for (let from = 0; ; from += 1000) {
+    const result = await query(from, from + 999);
+    if (result.error) throw toSafeQueryError(queryName, result.error);
+    rows.push(...(result.data ?? []));
+    if (!result.data || result.data.length < 1000) break;
   }
-  return { data: (result.data ?? []) as T };
+  return rows;
+}
+
+function toSafeQueryError(queryName: string, supabaseError: unknown): SafeSupabaseError {
+  const error = typeof supabaseError === "object" && supabaseError !== null ? supabaseError as Record<string, unknown> : {};
+  return {
+    query: queryName,
+    message: typeof error.message === "string" ? error.message : String(supabaseError),
+    code: typeof error.code === "string" ? error.code : undefined,
+    details: typeof error.details === "string" ? error.details : undefined,
+    hint: typeof error.hint === "string" ? error.hint : undefined
+  };
 }
 
 function HomeError({ error }: { error: string }) {
