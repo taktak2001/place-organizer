@@ -13,7 +13,7 @@ type SearchParams = Record<string, string | string[] | undefined>;
 
 export default async function PlacesPage({ searchParams }: { searchParams: SearchParams }) {
   const filters = normalizeSearchParams(searchParams);
-  const { data: places, error } = await safeQuery<PlaceRow[]>([], fetchAllPlaces);
+  const { data: places, error } = await safeQuery<PlaceRow[]>([], fetchAllPlaces, "getPlaces");
   const filtered = sortRecommended(places.filter((place) => placeMatches(place, filters)));
   const page = Math.min(filters.page, Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)));
   const visiblePlaces = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -27,7 +27,7 @@ export default async function PlacesPage({ searchParams }: { searchParams: Searc
         <p className="mt-2 text-sm text-stone-700">全体から名前・カテゴリ・行ってみたいで素早く探します。細かい条件はカテゴリ別ページで指定できます。</p>
       </header>
 
-      {error ? <div className="rounded-lg border border-clay bg-white p-4 text-sm text-stone-700">{localizeError(error)}</div> : null}
+      {error ? <ErrorBox error={localizeError(error)} /> : null}
 
       <QuickFilters filters={filters} />
 
@@ -62,6 +62,10 @@ export default async function PlacesPage({ searchParams }: { searchParams: Searc
       <Pagination page={page} totalPages={totalPages} filters={filters} />
     </div>
   );
+}
+
+function ErrorBox({ error }: { error: string }) {
+  return <pre className="whitespace-pre-wrap rounded-lg border border-clay bg-white p-4 text-sm text-stone-700">{error}</pre>;
 }
 
 function QuickFilters({ filters }: { filters: ReturnType<typeof normalizeSearchParams> }) {
@@ -150,6 +154,9 @@ function valuesOf(value: string | string[] | undefined) {
 }
 
 function localizeError(error: string) {
+  if (error.includes("Supabase公開接続情報が未設定です。missing")) {
+    return error.replace(/^Error:\s*/, "");
+  }
   if (error.includes("NEXT_PUBLIC_SUPABASE_URL または NEXT_PUBLIC_SUPABASE_ANON_KEY")) {
     return "Supabase公開接続情報が未設定です。NEXT_PUBLIC_SUPABASE_URL と NEXT_PUBLIC_SUPABASE_ANON_KEY を設定してください。";
   }

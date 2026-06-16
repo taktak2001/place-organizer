@@ -9,7 +9,7 @@ export const revalidate = 0;
 export const fetchCache = "force-no-store";
 
 export default async function CategoriesPage() {
-  const { data: places, error } = await safeQuery<PlaceRow[]>([], fetchAllPlaces);
+  const { data: places, error } = await safeQuery<PlaceRow[]>([], fetchAllPlaces, "getCategoriesPlaces");
   const activePlaces = places.filter(matchesArchive);
 
   return (
@@ -20,7 +20,7 @@ export default async function CategoriesPage() {
         <p className="mt-2 text-sm text-stone-700">用途ごとに探す入口です。詳細な条件は各カテゴリページで指定できます。</p>
       </header>
 
-      {error ? <div className="rounded-lg border border-clay bg-white p-4 text-sm text-stone-700">{error}</div> : null}
+      {error ? <pre className="whitespace-pre-wrap rounded-lg border border-clay bg-white p-4 text-sm text-stone-700">{error}</pre> : null}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {ALL_CATEGORY_SLUGS.map((slug) => (

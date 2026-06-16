@@ -22,7 +22,7 @@ export default async function CategoryPage({ params, searchParams }: { params: {
   if (!category) notFound();
 
   const filters = normalizeSearchParams(searchParams);
-  const { data: places, error } = await safeQuery<PlaceRow[]>([], fetchAllPlaces);
+  const { data: places, error } = await safeQuery<PlaceRow[]>([], fetchAllPlaces, "getCategoryPlaces");
   const categoryPlaces = places.filter((place) => matchesArchive(place) && String(firstRelated(place.place_classifications)?.main_category ?? "Other") === category);
   const filtered = sortRecommended(categoryPlaces.filter((place) => placeMatches(place, category, filters)));
   const page = Math.min(filters.page, Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)));
@@ -41,7 +41,7 @@ export default async function CategoryPage({ params, searchParams }: { params: {
         <p className="mt-2 text-sm text-stone-700">行ってみたい {wantCount} / 全 {categoryPlaces.length}</p>
       </header>
 
-      {error ? <div className="rounded-lg border border-clay bg-white p-4 text-sm text-stone-700">{error}</div> : null}
+      {error ? <pre className="whitespace-pre-wrap rounded-lg border border-clay bg-white p-4 text-sm text-stone-700">{error}</pre> : null}
 
       <form className="rounded-lg border border-stone-300 bg-white p-4">
         <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
