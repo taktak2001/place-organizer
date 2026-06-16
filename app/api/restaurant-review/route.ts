@@ -1,11 +1,30 @@
 import { NextResponse } from "next/server";
+import { getNextRestaurantReviewPlace, getRestaurantReviewCounts, normalizeReviewStatus, type RestaurantReviewStatus } from "@/lib/restaurant/review-queries";
 import { isRestaurantReviewStatus } from "@/lib/restaurant/quality";
-import { AdminAuthError, assertAdminRequest, getSupabaseAdmin } from "@/lib/supabase/server";
+import { AdminAuthError, assertAdminRequest, getSupabaseAdmin, getSupabaseRead } from "@/lib/supabase/server";
+import { safeSupabaseError } from "@/lib/supabase/queries";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
+
+export async function GET(request: Request) {
+  try {
+    const url = new URL(request.url);
+    const status = normalizeReviewStatus(url.searchParams.get("status")) as RestaurantReviewStatus;
+    const cursor = url.searchParams.get("cursor");
+    const supabase = getSupabaseRead();
+    const [counts, place] = await Promise.all([
+      getRestaurantReviewCounts(supabase),
+      getNextRestaurantReviewPlace(supabase, status, cursor)
+    ]);
+    return NextResponse.json({ counts, place }, { headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    const safe = safeSupabaseError(error, "getNextRestaurantReviewPlace");
+    return NextResponse.json(safe, { status: 500 });
+  }
+}
 
 export async function PATCH(request: Request) {
   try {
@@ -20,7 +39,7 @@ export async function PATCH(request: Request) {
 
     const patch: Record<string, unknown> = {
       restaurant_review_status: status,
-      restaurant_review_note: emptyToNull(body.restaurant_review_note) ?? reasonFromStatus(status),
+      restaurant_notes: emptyToNull(body.restaurant_notes) ?? reasonFromStatus(status),
       restaurant_reviewed_at: new Date().toISOString(),
       manual_override: true,
       classification_source: "manual"
@@ -68,7 +87,7 @@ function statusFromAction(action: string, value: unknown) {
   if (action === "approve") return "verified";
   if (action === "needs_review") return "needs_check";
   if (action === "reject") return "not_restaurant";
-  if (action === "reset") return "pending";
+  if (action === "reset") return "unreviewed";
   return isRestaurantReviewStatus(value) ? value : null;
 }
 

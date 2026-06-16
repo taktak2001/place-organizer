@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { RestaurantReviewClient } from "@/components/RestaurantReviewClient";
-import { firstRelated, matchesArchive, sortRecommended, type PlaceRow } from "@/lib/places/browse";
+import { getNextRestaurantReviewPlace, getRestaurantReviewCounts, type RestaurantReviewStatus } from "@/lib/restaurant/review-queries";
 import { isAdminEnabled, getSupabaseRead } from "@/lib/supabase/server";
 import { safeQuery } from "@/lib/supabase/queries";
 
@@ -22,8 +22,11 @@ export default async function RestaurantReviewPage() {
     );
   }
 
-  const { data: places, error } = await safeQuery<PlaceRow[]>([], fetchRestaurants, "getRestaurantReviewPlaces");
-  const restaurants = sortRecommended(places.filter((place) => matchesArchive(place)));
+  const { data, error } = await safeQuery(
+    { counts: { unreviewed: 0, verified: 0, not_restaurant: 0, needs_check: 0 }, place: null },
+    getInitialRestaurantReviewData,
+    "getInitialRestaurantReviewData"
+  );
 
   return (
     <div className="space-y-5">
@@ -42,22 +45,14 @@ export default async function RestaurantReviewPage() {
 
       {error ? <pre className="whitespace-pre-wrap rounded-lg border border-clay bg-white p-4 text-sm text-stone-700">{error}</pre> : null}
 
-      <RestaurantReviewClient initialPlaces={restaurants} />
+      <RestaurantReviewClient initialCounts={data.counts} initialPlace={data.place} initialStatus="unreviewed" />
     </div>
   );
 }
 
-async function fetchRestaurants() {
-  const supabase = getSupabaseRead();
-  const rows: PlaceRow[] = [];
-  for (let from = 0; ; from += 1000) {
-    const { data, error } = await supabase
-      .from("places")
-      .select("*, place_classifications(*), source_links(*)")
-      .range(from, from + 999);
-    if (error) throw error;
-    rows.push(...((data ?? []) as unknown as PlaceRow[]));
-    if (!data || data.length < 1000) break;
-  }
-  return rows.filter((place) => String(firstRelated(place.place_classifications)?.main_category ?? "Other") === "Restaurant");
+async function getInitialRestaurantReviewData(supabase: ReturnType<typeof getSupabaseRead>) {
+  const counts = await getRestaurantReviewCounts(supabase);
+  const status: RestaurantReviewStatus = "unreviewed";
+  const place = await getNextRestaurantReviewPlace(supabase, status);
+  return { counts, place };
 }

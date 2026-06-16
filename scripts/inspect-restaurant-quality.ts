@@ -31,7 +31,7 @@ async function main() {
   const restaurants = places.filter((place) => firstClassification(place.place_classifications)?.main_category === "Restaurant");
   const result = {
     total_restaurant_count: restaurants.length,
-    pending_review_count: restaurants.filter((place) => reviewStatus(place) === "pending").length,
+    unreviewed_count: restaurants.filter((place) => reviewStatus(place) === "unreviewed").length,
     verified_count: restaurants.filter((place) => reviewStatus(place) === "verified").length,
     not_restaurant_count: restaurants.filter((place) => reviewStatus(place) === "not_restaurant").length,
     needs_check_count: restaurants.filter((place) => reviewStatus(place) === "needs_check").length,
@@ -66,7 +66,9 @@ function firstClassification(value: unknown): ClassificationRow | null {
 }
 
 function reviewStatus(place: PlaceRow) {
-  return firstClassification(place.place_classifications)?.restaurant_review_status ?? "pending";
+  const status = String(firstClassification(place.place_classifications)?.restaurant_review_status ?? "").trim();
+  if (status === "verified" || status === "not_restaurant" || status === "needs_check") return status;
+  return "unreviewed";
 }
 
 function tags(value: unknown) {

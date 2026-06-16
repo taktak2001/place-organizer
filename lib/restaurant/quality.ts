@@ -1,7 +1,7 @@
 import { RESTAURANT_CUISINE_TAGS } from "@/lib/classification/restaurant-cuisine";
 import { RESTAURANT_SCENE_TAGS } from "@/lib/classification/ai";
 
-export const RESTAURANT_REVIEW_STATUSES = ["pending", "verified", "not_restaurant", "needs_check"] as const;
+export const RESTAURANT_REVIEW_STATUSES = ["unreviewed", "verified", "not_restaurant", "needs_check"] as const;
 export type RestaurantReviewStatus = typeof RESTAURANT_REVIEW_STATUSES[number];
 
 export const RESTAURANT_QUALITY_FLAG_LABELS: Record<string, string> = {
@@ -61,7 +61,7 @@ export function inspectRestaurantQuality(input: RestaurantQualityInput): Restaur
   return {
     flags: resultFlags,
     reason: resultFlags.map((flag) => RESTAURANT_QUALITY_FLAG_LABELS[flag] ?? flag).join(" / ") || "品質フラグなし",
-    suggested_status: resultFlags.length > 0 ? "needs_check" : "pending"
+    suggested_status: resultFlags.length > 0 ? "needs_check" : "unreviewed"
   };
 }
 

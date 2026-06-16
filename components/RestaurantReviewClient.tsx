@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { RESTAURANT_CUISINE_TAGS } from "@/lib/classification/restaurant-cuisine";
@@ -8,49 +8,63 @@ import { REGION_FILTER_SECTIONS } from "@/lib/classification/display-region";
 import { jaCategoryTag, jaSceneTag } from "@/lib/i18n/ja";
 import { preferredGoogleMapsUrl } from "@/lib/import/source-fields";
 import { firstRelated, restaurantPriceBand, restaurantPriceBandLabel, sceneTags, type PlaceRow } from "@/lib/places/browse";
-
-type ReviewStatus = "pending" | "verified" | "not_restaurant" | "needs_check";
+import { RESTAURANT_REVIEW_STATUSES, type RestaurantReviewCounts, type RestaurantReviewStatus } from "@/lib/restaurant/review-queries";
 
 type Props = {
-  initialPlaces: PlaceRow[];
+  initialCounts: RestaurantReviewCounts;
+  initialPlace: PlaceRow | null;
+  initialStatus: RestaurantReviewStatus;
 };
-
-const STATUSES: Array<{ value: ReviewStatus; label: string }> = [
-  { value: "pending", label: "未確認" },
-  { value: "verified", label: "確認済み" },
-  { value: "not_restaurant", label: "レストランではない" },
-  { value: "needs_check", label: "要確認" }
-];
 
 const SCENE_TAGS = ["Date", "Business", "Solo", "Casual", "Group", "Travel", "High-end", "Local"];
 const PRICE_BANDS = ["cheap", "normal", "high", "luxury", "unknown"];
 
-export function RestaurantReviewClient({ initialPlaces }: Props) {
-  const [places, setPlaces] = useState(initialPlaces);
-  const [status, setStatus] = useState<ReviewStatus>("pending");
-  const [index, setIndex] = useState(0);
+export function RestaurantReviewClient({ initialCounts, initialPlace, initialStatus }: Props) {
+  const [counts, setCounts] = useState(initialCounts);
+  const [status, setStatus] = useState<RestaurantReviewStatus>(initialStatus);
+  const [current, setCurrent] = useState<PlaceRow | null>(initialPlace);
   const [message, setMessage] = useState("");
-  const filtered = useMemo(() => places.filter((place) => reviewStatus(place) === status), [places, status]);
-  const current = filtered[Math.min(index, Math.max(0, filtered.length - 1))] ?? null;
+  const [loading, setLoading] = useState(false);
 
-  function switchStatus(next: ReviewStatus) {
-    setStatus(next);
-    setIndex(0);
+  async function loadNext(nextStatus = status, cursor?: string | null) {
+    setLoading(true);
     setMessage("");
+    try {
+      const params = new URLSearchParams({ status: nextStatus });
+      if (cursor) params.set("cursor", cursor);
+      const response = await fetch(`/api/restaurant-review?${params.toString()}`, { cache: "no-store" });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(errorText(json));
+      setCounts(json.counts ?? { unreviewed: 0, verified: 0, not_restaurant: 0, needs_check: 0 });
+      setCurrent(json.place ?? null);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function updatePlace(placeId: string, classification: Record<string, unknown>) {
-    setPlaces((items) => items.map((place) => {
-      if (String(place.id) !== placeId) return place;
-      return { ...place, place_classifications: [{ ...(firstRelated(place.place_classifications) ?? {}), ...classification }] };
-    }));
+  function switchStatus(next: RestaurantReviewStatus) {
+    setStatus(next);
+    void loadNext(next);
   }
+
+  function afterSaved(previousStatus: RestaurantReviewStatus, nextStatus: RestaurantReviewStatus, cursor: string) {
+    setCounts((value) => ({
+      ...value,
+      [previousStatus]: Math.max(0, (value[previousStatus] ?? 0) - 1),
+      [nextStatus]: (value[nextStatus] ?? 0) + 1
+    }));
+    setMessage("保存しました");
+    void loadNext(previousStatus, cursor);
+  }
+
+  const totalForStatus = counts[status] ?? 0;
 
   return (
     <div className="space-y-4">
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {STATUSES.map((item) => {
-          const count = places.filter((place) => reviewStatus(place) === item.value).length;
+        {RESTAURANT_REVIEW_STATUSES.map((item) => {
           const active = item.value === status;
           return (
             <button
@@ -59,30 +73,28 @@ export function RestaurantReviewClient({ initialPlaces }: Props) {
               onClick={() => switchStatus(item.value)}
               className={`min-h-10 shrink-0 rounded-md border px-3 text-sm font-semibold ${active ? "border-moss bg-moss text-white" : "border-line bg-white text-ink"}`}
             >
-              {item.label} {count}
+              {item.label} {counts[item.value] ?? 0}
             </button>
           );
         })}
       </div>
 
       <div className="rounded-lg border border-line bg-white p-4 text-sm text-stone-700">
-        {filtered.length === 0 ? "対象はありません。" : `${index + 1} / ${filtered.length} 件を確認中`}
-        {message ? <span className="ml-3 text-moss">{message}</span> : null}
+        {loading ? "読み込み中..." : current ? `1 / ${totalForStatus} 件を確認中` : "対象はありません。"}
+        {message ? <span className={message.includes("query:") || message.includes("message:") ? "ml-3 text-clay" : "ml-3 text-moss"}>{message}</span> : null}
       </div>
 
       {current ? (
         <RestaurantReviewCard
           key={String(current.id)}
           place={current}
-          onSaved={(classification) => {
-            updatePlace(String(current.id), classification);
-            setMessage("保存しました");
-            setIndex((value) => Math.min(value, Math.max(0, filtered.length - 2)));
-          }}
+          status={status}
+          onSaved={afterSaved}
           onSkip={() => {
             setMessage("スキップしました");
-            setIndex((value) => Math.min(value + 1, Math.max(0, filtered.length - 1)));
+            void loadNext(status, String(current.id));
           }}
+          onNext={() => loadNext(status, String(current.id))}
         />
       ) : (
         <div className="rounded-lg border border-line bg-white p-6 text-sm text-stone-600">このステータスの対象はありません。</div>
@@ -91,9 +103,9 @@ export function RestaurantReviewClient({ initialPlaces }: Props) {
   );
 }
 
-function RestaurantReviewCard({ place, onSaved, onSkip }: { place: PlaceRow; onSaved: (classification: Record<string, unknown>) => void; onSkip: () => void }) {
+function RestaurantReviewCard({ place, status, onSaved, onSkip, onNext }: { place: PlaceRow; status: RestaurantReviewStatus; onSaved: (previousStatus: RestaurantReviewStatus, nextStatus: RestaurantReviewStatus, cursor: string) => void; onSkip: () => void; onNext: () => void }) {
   const classification = firstRelated(place.place_classifications);
-  const [reviewStatusValue, setReviewStatusValue] = useState<ReviewStatus>(reviewStatus(place));
+  const [reviewStatusValue, setReviewStatusValue] = useState<RestaurantReviewStatus>(reviewStatus(place));
   const [categoryTags, setCategoryTags] = useState<string[]>(arrayValue(classification?.category_tags));
   const [selectedScenes, setSelectedScenes] = useState<string[]>(sceneTags(classification));
   const [regionGroup, setRegionGroup] = useState(String(classification?.region_group ?? ""));
@@ -101,12 +113,10 @@ function RestaurantReviewCard({ place, onSaved, onSkip }: { place: PlaceRow; onS
   const [travelRegion, setTravelRegion] = useState(String(classification?.travel_region ?? ""));
   const [areaLabel, setAreaLabel] = useState(String(classification?.area_label ?? ""));
   const [priceBand, setPriceBand] = useState(restaurantPriceBand(place, classification));
-  const [note, setNote] = useState(String(classification?.restaurant_review_note ?? ""));
+  const [notes, setNotes] = useState(String(classification?.restaurant_notes ?? ""));
   const [saving, setSaving] = useState(false);
   const mapsHref = preferredGoogleMapsUrl({
-    rawGoogle: place.raw_google,
-    placeGoogleMapsUrl: place.google_maps_url,
-    rawImport: place.raw_import,
+    placeGoogleMapsUrl: sourceLinkUrl(place) ?? place.google_maps_url,
     latitude: place.latitude,
     longitude: place.longitude
   });
@@ -123,7 +133,7 @@ function RestaurantReviewCard({ place, onSaved, onSkip }: { place: PlaceRow; onS
         travel_region: travelRegion,
         area_label: areaLabel,
         restaurant_price_band: priceBand,
-        restaurant_review_note: note
+        restaurant_notes: notes
       };
       const response = await fetch(`/api/restaurant-review/${String(place.id)}`, {
         method: "PATCH",
@@ -131,17 +141,8 @@ function RestaurantReviewCard({ place, onSaved, onSkip }: { place: PlaceRow; onS
         body: JSON.stringify(payload)
       });
       const json = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(String(json.error ?? "保存に失敗しました"));
-      onSaved({
-        ...payload,
-        manual_override: true,
-        classification_source: "manual",
-        restaurant_reviewed_at: new Date().toISOString(),
-        main_category: nextStatus === "not_restaurant" ? "Other" : "Restaurant",
-        category_tags: nextStatus === "not_restaurant" ? [] : categoryTags,
-        scene_tags: nextStatus === "not_restaurant" ? [] : selectedScenes,
-        restaurant_price_band: nextStatus === "not_restaurant" ? "unknown" : priceBand
-      });
+      if (!response.ok) throw new Error(errorText(json));
+      onSaved(status, nextStatus, String(place.id));
     } catch (error) {
       alert(error instanceof Error ? error.message : String(error));
     } finally {
@@ -179,11 +180,11 @@ function RestaurantReviewCard({ place, onSaved, onSkip }: { place: PlaceRow; onS
         <section className="space-y-3">
           <label className="block">
             <span className="text-xs font-semibold uppercase text-stone-600">本当にレストランか</span>
-            <select value={reviewStatusValue} onChange={(event) => setReviewStatusValue(event.target.value as ReviewStatus)} className="mt-1 h-11 w-full rounded-md border border-line bg-white px-3">
+            <select value={reviewStatusValue} onChange={(event) => setReviewStatusValue(event.target.value as RestaurantReviewStatus)} className="mt-1 h-11 w-full rounded-md border border-line bg-white px-3">
               <option value="verified">レストラン</option>
               <option value="not_restaurant">レストランではない</option>
               <option value="needs_check">要確認</option>
-              <option value="pending">未確認</option>
+              <option value="unreviewed">未確認</option>
             </select>
           </label>
 
@@ -227,7 +228,7 @@ function RestaurantReviewCard({ place, onSaved, onSkip }: { place: PlaceRow; onS
           </div>
           <label className="block">
             <span className="text-xs font-semibold uppercase text-stone-600">メモ</span>
-            <textarea value={note} onChange={(event) => setNote(event.target.value)} className="mt-1 min-h-24 w-full rounded-md border border-line bg-white px-3 py-2" />
+            <textarea value={notes} onChange={(event) => setNotes(event.target.value)} className="mt-1 min-h-24 w-full rounded-md border border-line bg-white px-3 py-2" />
           </label>
         </section>
       </div>
@@ -237,6 +238,7 @@ function RestaurantReviewCard({ place, onSaved, onSkip }: { place: PlaceRow; onS
         <button type="button" disabled={saving} onClick={() => save("not_restaurant")} className="min-h-11 rounded-md border border-clay bg-warningSoft px-4 py-2 text-sm font-semibold text-clay disabled:opacity-50">レストランではない</button>
         <button type="button" disabled={saving} onClick={() => save("needs_check")} className="min-h-11 rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50">要確認にする</button>
         <button type="button" disabled={saving} onClick={onSkip} className="min-h-11 rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50">スキップ</button>
+        <button type="button" disabled={saving} onClick={onNext} className="min-h-11 rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50">次へ</button>
       </div>
     </article>
   );
@@ -277,11 +279,36 @@ function chipClass(tone: "cuisine" | "scene" | "region" | "price", active: boole
   return "border border-line bg-white text-ink";
 }
 
-function reviewStatus(place: PlaceRow): ReviewStatus {
-  const value = String(firstRelated(place.place_classifications)?.restaurant_review_status ?? "pending");
-  return STATUSES.some((item) => item.value === value) ? value as ReviewStatus : "pending";
+function reviewStatus(place: PlaceRow): RestaurantReviewStatus {
+  const value = String(firstRelated(place.place_classifications)?.restaurant_review_status ?? "unreviewed");
+  if (value === "verified" || value === "not_restaurant" || value === "needs_check") return value;
+  return "unreviewed";
 }
 
 function arrayValue(value: unknown) {
   return Array.isArray(value) ? value.map(String).filter(Boolean) : [];
+}
+
+function sourceLinkUrl(place: PlaceRow) {
+  const links = Array.isArray(place.source_links) ? place.source_links : [];
+  for (const link of links) {
+    if (!link || typeof link !== "object") continue;
+    const record = link as Record<string, unknown>;
+    if (record.active === false) continue;
+    const url = String(record.source_url ?? "").trim();
+    if (url) return url;
+  }
+  return null;
+}
+
+function errorText(json: Record<string, unknown>) {
+  if (typeof json.error === "string") return json.error;
+  const parts = [
+    json.query ? `query: ${json.query}` : null,
+    json.message ? `message: ${json.message}` : null,
+    json.code ? `code: ${json.code}` : null,
+    json.details ? `details: ${json.details}` : null,
+    json.hint ? `hint: ${json.hint}` : null
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join("\n") : "Restaurantレビューの取得に失敗しました";
 }

@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
 
-const REVIEW_STATUSES = new Set(["pending", "verified", "not_restaurant", "needs_check"]);
+const REVIEW_STATUSES = new Set(["unreviewed", "verified", "not_restaurant", "needs_check"]);
 const PRICE_BANDS = new Set(["cheap", "normal", "high", "luxury", "unknown"]);
 const SCENE_TAGS = new Set(["Date", "Business", "Solo", "Casual", "Group", "Travel", "High-end", "Local"]);
 
@@ -15,7 +15,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   try {
     assertAdminRequest(request);
     const body = await request.json();
-    const status = stringValue(body.restaurant_review_status) ?? "verified";
+    const status = normalizeReviewStatus(body.restaurant_review_status ?? "verified");
     if (!REVIEW_STATUSES.has(status)) {
       return NextResponse.json({ error: "invalid restaurant_review_status" }, { status: 400 });
     }
@@ -38,7 +38,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       area_label: emptyToNull(body.area_label),
       restaurant_review_status: status,
       restaurant_reviewed_at: new Date().toISOString(),
-      restaurant_review_note: emptyToNull(body.restaurant_review_note),
+      restaurant_notes: emptyToNull(body.restaurant_notes),
       restaurant_price_band: notRestaurant ? "unknown" : priceBand,
       manual_override: true,
       classification_source: "manual"
@@ -50,7 +50,10 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       .upsert({ place_id: params.id, ...patch }, { onConflict: "place_id" });
     if (error) throw error;
 
-    return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json(
+      { ok: true, place_id: params.id, restaurant_review_status: status },
+      { headers: { "Cache-Control": "no-store" } }
+    );
   } catch (error) {
     if (error instanceof AdminAuthError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
@@ -62,6 +65,12 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 function normalizeSceneTags(value: unknown) {
   const values = Array.isArray(value) ? value : [];
   return [...new Set(values.map((item) => String(item ?? "").trim()).filter((item) => SCENE_TAGS.has(item)))];
+}
+
+function normalizeReviewStatus(value: unknown) {
+  const status = stringValue(value);
+  if (status === "pending") return "unreviewed";
+  return status ?? "verified";
 }
 
 function stringValue(value: unknown) {
