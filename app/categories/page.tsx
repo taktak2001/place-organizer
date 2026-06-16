@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import { jaCategory } from "@/lib/i18n/ja";
 import { ALL_CATEGORY_SLUGS, CATEGORY_SLUGS, fetchAllPlaces, firstRelated, isWantToGo, matchesArchive, sortRecommended, type CategorySlug, type PlaceRow } from "@/lib/places/browse";
 import { safeQuery } from "@/lib/supabase/queries";
@@ -36,10 +37,15 @@ function CategoryCard({ slug, places }: { slug: CategorySlug; places: PlaceRow[]
   const categoryPlaces = sortRecommended(places.filter((place) => String(firstRelated(place.place_classifications)?.main_category ?? "Other") === category));
   const wantCount = categoryPlaces.filter(isWantToGo).length;
   return (
-    <Link href={`/category/${slug}`} className="block rounded-lg border border-line bg-white p-4 transition active:scale-[0.99] active:bg-paper hover:border-moss hover:shadow-sm">
+    <Link href={`/category/${slug}`} className="group block rounded-lg border border-line bg-white p-4 transition active:scale-[0.99] active:bg-paper hover:border-moss hover:shadow-sm">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold">{jaCategory(category)}</h2>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-paper text-ink transition group-hover:text-moss">
+              <CategoryIcon category={category} size={20} className="text-ink transition group-hover:text-moss" />
+            </span>
+            <h2 className="text-xl font-semibold">{jaCategory(category)}</h2>
+          </div>
           <p className="mt-1 text-sm text-stone-600">行ってみたい {wantCount} / 全 {categoryPlaces.length}</p>
         </div>
         <ArrowRight className="mt-1 h-5 w-5 text-moss" />

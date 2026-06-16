@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import { classifyDisplayRegion } from "@/lib/classification/display-region";
 import { ja, jaCategory, jaCategoryTag, jaDisplay, jaGooglePlaceTypes, jaSceneTag } from "@/lib/i18n/ja";
 import { googleMapsUri, isCandidateOnly, preferredGoogleMapsUrl } from "@/lib/import/source-fields";
@@ -38,7 +39,12 @@ export function PlaceBrowseCard({ place, mode = "general" }: Props) {
           <Link href={`/places/${String(place.id)}`} className="min-w-0 flex-1 text-lg font-semibold leading-snug text-ink hover:text-moss">
             {String(place.name)}
           </Link>
-          {mode === "general" ? <span className="rounded-md border border-line bg-white px-2 py-1 text-xs font-medium text-ink">{jaCategory(category)}</span> : null}
+          {mode === "general" ? (
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-line bg-white px-2 py-1 text-xs font-medium text-ink">
+              <CategoryIcon category={category} size={14} />
+              {jaCategory(category)}
+            </span>
+          ) : null}
         </div>
 
         <div className="flex flex-wrap gap-1.5">

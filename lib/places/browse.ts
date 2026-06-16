@@ -1,24 +1,14 @@
 import type { getSupabaseRead } from "@/lib/supabase/server";
+import { CATEGORY_CONFIGS, categoryConfigFromSlug, type CategorySlug } from "@/lib/categories/config";
 
 export type PlaceRow = Record<string, unknown>;
+export type { CategorySlug } from "@/lib/categories/config";
 
-export const CATEGORY_SLUGS = {
-  restaurant: "Restaurant",
-  cafe: "Cafe",
-  art: "Art",
-  fashion: "Fashion",
-  hotel: "Hotel",
-  bath: "Bath",
-  life: "Life",
-  other: "Other"
-} as const;
-
+export const CATEGORY_SLUGS = Object.fromEntries(CATEGORY_CONFIGS.map((category) => [category.slug, category.main_category])) as Record<CategorySlug, string>;
 export const PRIMARY_CATEGORY_SLUGS = ["restaurant", "cafe", "art", "fashion", "hotel", "bath"] as const;
-export const ALL_CATEGORY_SLUGS = ["restaurant", "cafe", "art", "fashion", "hotel", "bath", "life", "other"] as const;
-export const CATEGORY_ORDER = ["Art", "Cafe", "Restaurant", "Fashion", "Hotel", "Bath", "Life", "Other"];
+export const ALL_CATEGORY_SLUGS = CATEGORY_CONFIGS.map((category) => category.slug) as CategorySlug[];
+export const CATEGORY_ORDER: string[] = CATEGORY_CONFIGS.map((category) => category.main_category);
 export const PAGE_SIZE = 50;
-
-export type CategorySlug = keyof typeof CATEGORY_SLUGS;
 
 export async function fetchAllPlaces(supabase: ReturnType<typeof getSupabaseRead>) {
   const rows: PlaceRow[] = [];
@@ -35,7 +25,7 @@ export async function fetchAllPlaces(supabase: ReturnType<typeof getSupabaseRead
 }
 
 export function categoryFromSlug(slug: string) {
-  return CATEGORY_SLUGS[slug as CategorySlug] ?? null;
+  return categoryConfigFromSlug(slug)?.main_category ?? null;
 }
 
 export function slugFromCategory(category: string) {

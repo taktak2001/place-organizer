@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, ListChecks } from "lucide-react";
+import { CategoryIcon } from "@/components/CategoryIcon";
+import { PRIMARY_CATEGORY_CONFIGS } from "@/lib/categories/config";
 import { ja, jaCategory } from "@/lib/i18n/ja";
 import { safeQuery, type SafeSupabaseError } from "@/lib/supabase/queries";
 import type { getSupabaseRead } from "@/lib/supabase/server";
@@ -36,18 +38,11 @@ type SourceLinkSummaryRow = {
   place_id: string;
 };
 
-const PUBLIC_HOME_CATEGORIES = [
-  ["restaurant", "Restaurant"],
-  ["cafe", "Cafe"],
-  ["art", "Art"],
-  ["fashion", "Fashion"],
-  ["hotel", "Hotel"],
-  ["bath", "Bath"]
-] as const;
+const PUBLIC_HOME_CATEGORIES = PRIMARY_CATEGORY_CONFIGS;
 
 const FALLBACK_HOME: HomeData = {
   totalAvailablePlaces: 0,
-  categoryCards: PUBLIC_HOME_CATEGORIES.map(([slug, category]) => ({ slug, category, total: 0, want: 0, samples: [] }))
+  categoryCards: PUBLIC_HOME_CATEGORIES.map((category) => ({ slug: category.slug, category: category.main_category, total: 0, want: 0, samples: [] }))
 };
 
 export default async function HomePage() {
@@ -81,10 +76,15 @@ export default async function HomePage() {
         </div>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {data.categoryCards.map((card) => (
-            <Link key={card.slug} href={`/category/${card.slug}`} className="block rounded-lg border border-line bg-white p-4 transition active:scale-[0.99] active:bg-paper hover:border-moss hover:shadow-sm">
+            <Link key={card.slug} href={`/category/${card.slug}`} className="group block rounded-lg border border-line bg-white p-4 transition active:scale-[0.99] active:bg-paper hover:border-moss hover:shadow-sm">
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="text-xl font-semibold">{jaCategory(card.category)}</h3>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-paper text-ink transition group-hover:text-moss">
+                      <CategoryIcon category={card.category} size={20} className="text-ink transition group-hover:text-moss" />
+                    </span>
+                    <h3 className="text-xl font-semibold">{jaCategory(card.category)}</h3>
+                  </div>
                   <p className="mt-1 text-sm text-stone-600">行ってみたい {card.want} / 全 {card.total}</p>
                 </div>
                 <ArrowRight className="mt-1 h-5 w-5 text-moss" />
@@ -134,12 +134,13 @@ async function getPublicHomeSummary(supabase: ReturnType<typeof getSupabaseRead>
 
   return {
     totalAvailablePlaces: availableCount,
-    categoryCards: PUBLIC_HOME_CATEGORIES.map(([slug, category]) => {
+    categoryCards: PUBLIC_HOME_CATEGORIES.map((config) => {
+      const category = config.main_category;
       const categoryPlaces = availablePlaces
         .filter((place) => categoryByPlaceId.get(place.id) === category)
         .sort((a, b) => Number(wantIds.has(b.id)) - Number(wantIds.has(a.id)) || a.name.localeCompare(b.name, "ja"));
       return {
-        slug,
+        slug: config.slug,
         category,
         total: categoryPlaces.length,
         want: categoryPlaces.filter((place) => wantIds.has(place.id)).length,

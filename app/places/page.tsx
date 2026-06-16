@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import { PlaceBrowseCard } from "@/components/PlaceBrowseCard";
 import { ja, jaCategory } from "@/lib/i18n/ja";
 import { activeLinks, CATEGORY_ORDER, fetchAllPlaces, firstRelated, isWantToGo, matchesArchive, matchesText, PAGE_SIZE, sortRecommended, type PlaceRow } from "@/lib/places/browse";
@@ -70,7 +71,7 @@ function ErrorBox({ error }: { error: string }) {
 
 function QuickFilters({ filters }: { filters: ReturnType<typeof normalizeSearchParams> }) {
   const items = [
-    { label: "行ってみたい", type: "want" },
+    { label: "行ってみたい", type: "want" as const, iconKey: "sparkles" },
     ...CATEGORY_ORDER.map((category) => ({ label: jaCategory(category), category }))
   ];
   return (
@@ -84,8 +85,9 @@ function QuickFilters({ filters }: { filters: ReturnType<typeof normalizeSearchP
             <Link
               key={item.label}
               href={href}
-              className={`inline-flex h-11 shrink-0 items-center rounded-full border px-4 text-sm font-semibold ${active ? "border-moss bg-moss text-white" : "border-line bg-paper text-ink hover:border-moss hover:text-moss"}`}
+              className={`group inline-flex h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-semibold ${active ? "border-moss bg-moss text-white" : "border-line bg-paper text-ink hover:border-moss hover:text-moss"}`}
             >
+              <CategoryIcon category={"category" in item ? item.category : undefined} iconKey={"iconKey" in item ? item.iconKey : undefined} size={16} className={active ? "text-white" : "text-ink transition group-hover:text-moss"} />
               {item.label}
             </Link>
           );

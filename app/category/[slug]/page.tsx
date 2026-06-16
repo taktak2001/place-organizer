@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Search, SlidersHorizontal } from "lucide-react";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import { PlaceBrowseCard } from "@/components/PlaceBrowseCard";
 import { classifyDisplayRegion, REGION_FILTER_SECTIONS } from "@/lib/classification/display-region";
 import { RESTAURANT_CUISINE_TAGS } from "@/lib/classification/restaurant-cuisine";
@@ -40,7 +41,12 @@ export default async function CategoryPage({ params, searchParams }: { params: {
       <header>
         <Link href="/categories" className="text-sm font-semibold text-moss">カテゴリ一覧へ</Link>
         <p className="mt-3 text-sm font-medium uppercase text-moss">{category}</p>
-        <h1 className="mt-1 text-3xl font-semibold">{jaCategory(category)}</h1>
+        <div className="mt-1 flex items-center gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-paper text-ink">
+            <CategoryIcon category={category} size={24} />
+          </span>
+          <h1 className="text-3xl font-semibold">{jaCategory(category)}</h1>
+        </div>
         <p className="mt-2 text-sm text-stone-700">行ってみたい {wantCount} / 全 {categoryPlaces.length}</p>
       </header>
 
