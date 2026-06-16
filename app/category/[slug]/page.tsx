@@ -2,9 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { PlaceBrowseCard } from "@/components/PlaceBrowseCard";
+import { classifyDisplayRegion, REGION_FILTER_SECTIONS } from "@/lib/classification/display-region";
 import { RESTAURANT_CUISINE_TAGS } from "@/lib/classification/restaurant-cuisine";
 import { jaCategory, jaCategoryTag, jaDisplay, jaSceneTag } from "@/lib/i18n/ja";
-import { categoryFromSlug, categoryTags, fetchAllPlaces, firstRelated, isWantToGo, matchesArchive, matchesText, PAGE_SIZE, priceLevelLabel, sceneTags, sortRecommended, uniqueOptions, type PlaceRow } from "@/lib/places/browse";
+import { categoryFromSlug, categoryTags, fetchAllPlaces, firstRelated, isWantToGo, matchesArchive, matchesText, PAGE_SIZE, priceLevelLabel, sceneTags, sortRecommended, type PlaceRow } from "@/lib/places/browse";
 import { safeQuery } from "@/lib/supabase/queries";
 
 export const dynamic = "force-dynamic";
@@ -29,11 +30,10 @@ export default async function CategoryPage({ params, searchParams }: { params: {
   const page = Math.min(filters.page, Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)));
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const visiblePlaces = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const regionOptions = uniqueOptions(categoryPlaces.map((place) => firstRelated(place.place_classifications)?.travel_region));
-  const areaOptions = uniqueOptions(categoryPlaces.map((place) => firstRelated(place.place_classifications)?.area_label));
   const wantCount = categoryPlaces.filter(isWantToGo).length;
   const wantToggleHref = buildUrl(params.slug, { ...filters, want: !filters.want, page: 1 });
   const cuisineCounts = category === "Restaurant" ? countTags(categoryPlaces.flatMap((place) => categoryTags(firstRelated(place.place_classifications)))) : {};
+  const availableRegionLabels = new Set(categoryPlaces.map(displayRegionLabel).filter((label) => label && label !== "未分類"));
 
   return (
     <div className="space-y-5">
@@ -74,13 +74,11 @@ export default async function CategoryPage({ params, searchParams }: { params: {
           <div className="mt-3 grid gap-3 md:grid-cols-4">
             {category === "Restaurant" ? <CheckboxGroup name="category_tags" label="料理ジャンル" values={[...RESTAURANT_CUISINE_TAGS]} selected={filters.category_tags} labeler={jaCategoryTag} tone="cuisine" /> : null}
             {category === "Restaurant" ? <CheckboxGroup name="scene_tags" label="利用シーン" values={SCENE_TAGS} selected={filters.scene_tags} labeler={jaSceneTag} tone="scene" /> : null}
-            {category === "Restaurant" ? <SelectFilter name="travel_region" label="地域" value={filters.travel_region} options={regionOptions} labeler={jaDisplay} /> : null}
             {category === "Restaurant" ? <SelectFilter name="price_level" label="価格帯" value={filters.price_level} options={["1", "2", "3", "4"]} labeler={priceLevelLabel} /> : null}
             {category === "Art" ? <CheckboxGroup name="sub_category" label="サブカテゴリ" values={ART_SUB_CATEGORIES} selected={filters.sub_category} labeler={jaDisplay} /> : null}
             {category === "Fashion" ? <CheckboxGroup name="category_tags" label="ジャンル" values={FASHION_TAGS} selected={filters.category_tags} labeler={jaCategoryTag} /> : null}
             {category === "Cafe" ? <CheckboxGroup name="category_tags" label="タグ" values={CAFE_TAGS} selected={filters.category_tags} labeler={jaCategoryTag} /> : null}
-            {category !== "Restaurant" ? <SelectFilter name="travel_region" label="旅行地域" value={filters.travel_region} options={regionOptions} labeler={jaDisplay} /> : null}
-            <SelectFilter name="area_label" label="エリア" value={filters.area_label} options={areaOptions} labeler={jaDisplay} />
+            <RegionChipGroup selected={filters.region_filter_label} availableLabels={availableRegionLabels} />
           </div>
         </details>
       </form>
@@ -116,8 +114,7 @@ function placeMatches(place: PlaceRow, category: string, filters: ReturnType<typ
   const classification = firstRelated(place.place_classifications);
   return matchesText(filters.search, [place.name, place.address, classification?.area_label, classification?.travel_region].join(" ")) &&
     (!filters.want || isWantToGo(place)) &&
-    (!filters.travel_region || String(classification?.travel_region ?? "") === filters.travel_region) &&
-    (!filters.area_label || String(classification?.area_label ?? "") === filters.area_label) &&
+    (filters.region_filter_label.length === 0 || filters.region_filter_label.includes(displayRegionLabel(place))) &&
     (filters.price_level === "" || String(place.price_level ?? "") === filters.price_level) &&
     (filters.scene_tags.length === 0 || filters.scene_tags.some((tag) => sceneTags(classification).includes(tag))) &&
     (filters.sub_category.length === 0 || filters.sub_category.includes(String(classification?.sub_category ?? ""))) &&
@@ -136,6 +133,36 @@ function CheckboxGroup({ name, label, values, selected, labeler, tone = "default
             {labeler(value)}
           </label>
         ))}
+      </div>
+    </fieldset>
+  );
+}
+
+function RegionChipGroup({ selected, availableLabels }: { selected: string[]; availableLabels: Set<string> }) {
+  return (
+    <fieldset className="md:col-span-4">
+      <legend className="text-xs font-medium uppercase text-stone-600">地域</legend>
+      <div className="mt-1 space-y-3 rounded-md border border-stone-300 bg-white p-3">
+        {REGION_FILTER_SECTIONS.map((section) => {
+          const labels = section.labels.filter((label) => availableLabels.has(label) || selected.includes(label));
+          if (labels.length === 0) return null;
+          return (
+            <div key={section.group}>
+              <div className="mb-2 text-xs font-semibold text-stone-600">{section.title}</div>
+              <div className="flex flex-wrap gap-2">
+                {labels.map((label) => {
+                  const active = selected.includes(label);
+                  return (
+                    <label key={label} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs transition ${active ? "border-moss bg-moss text-white" : "border-stone-300 bg-white text-stone-800 hover:border-moss"}`}>
+                      <input className="sr-only" type="checkbox" name="region_filter_label" value={label} defaultChecked={active} />
+                      {label}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </fieldset>
   );
@@ -181,9 +208,8 @@ function normalizeSearchParams(searchParams: SearchParams) {
     scene_tags: valuesOf(searchParams.scene_tags),
     sub_category: valuesOf(searchParams.sub_category),
     category_tags: valuesOf(searchParams.category_tags),
+    region_filter_label: valuesOf(searchParams.region_filter_label),
     price_level: valueOf(searchParams.price_level),
-    travel_region: valueOf(searchParams.travel_region),
-    area_label: valueOf(searchParams.area_label),
     page: Number.isFinite(page) && page > 0 ? Math.floor(page) : 1
   };
 }
@@ -195,9 +221,8 @@ function buildUrl(slug: string, filters: ReturnType<typeof normalizeSearchParams
   for (const tag of filters.scene_tags) params.append("scene_tags", tag);
   for (const sub of filters.sub_category) params.append("sub_category", sub);
   for (const tag of filters.category_tags) params.append("category_tags", tag);
+  for (const label of filters.region_filter_label) params.append("region_filter_label", label);
   if (filters.price_level) params.set("price_level", filters.price_level);
-  if (filters.travel_region) params.set("travel_region", filters.travel_region);
-  if (filters.area_label) params.set("area_label", filters.area_label);
   if (filters.page > 1) params.set("page", String(filters.page));
   const query = params.toString();
   return query ? `/category/${slug}?${query}` : `/category/${slug}`;
@@ -216,4 +241,38 @@ function countTags(tags: string[]) {
   const counts = new Map<string, number>();
   for (const tag of tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
   return Object.fromEntries([...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ja")));
+}
+
+function displayRegionLabel(place: PlaceRow) {
+  const classification = firstRelated(place.place_classifications);
+  const existing = String(classification?.region_filter_label ?? "").trim();
+  if (existing) return existing;
+  return classifyDisplayRegion({
+    country: stringOrNull(classification?.country),
+    prefecture: stringOrNull(classification?.prefecture),
+    city: stringOrNull(classification?.city),
+    ward: stringOrNull(classification?.ward),
+    area_label: stringOrNull(classification?.area_label),
+    travel_region: stringOrNull(classification?.travel_region),
+    address: stringOrNull(place.address),
+    raw_google_summary: rawGoogleSummary(place.raw_google)
+  }).region_filter_label;
+}
+
+function rawGoogleSummary(rawGoogle: unknown) {
+  if (typeof rawGoogle !== "object" || rawGoogle === null) return null;
+  const raw = rawGoogle as Record<string, unknown>;
+  const candidate = typeof raw.candidate_place === "object" && raw.candidate_place !== null ? raw.candidate_place as Record<string, unknown> : null;
+  const source = candidate ?? raw;
+  return {
+    displayName: source.displayName,
+    name: source.name,
+    formattedAddress: source.formattedAddress ?? source.formatted_address ?? null,
+    address: source.address ?? null
+  };
+}
+
+function stringOrNull(value: unknown) {
+  const text = String(value ?? "").trim();
+  return text ? text : null;
 }

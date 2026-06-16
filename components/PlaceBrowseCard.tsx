@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
+import { classifyDisplayRegion } from "@/lib/classification/display-region";
 import { ja, jaCategory, jaCategoryTag, jaDisplay, jaGooglePlaceTypes, jaSceneTag } from "@/lib/i18n/ja";
 import { googleMapsUri, isCandidateOnly, preferredGoogleMapsUrl } from "@/lib/import/source-fields";
 import { activeLinks, categoryTags, firstRelated, sceneTags, type PlaceRow } from "@/lib/places/browse";
@@ -25,6 +26,7 @@ export function PlaceBrowseCard({ place, mode = "general" }: Props) {
   });
   const candidateOnly = isCandidateOnly(place.raw_google);
   const candidateHref = googleMapsUri(place.raw_google);
+  const regionLabel = displayRegionLabel(place, classification);
 
   return (
     <article className="rounded-lg border border-stone-300 bg-white p-3 shadow-sm md:p-4">
@@ -59,9 +61,8 @@ export function PlaceBrowseCard({ place, mode = "general" }: Props) {
           ))}
         </div>
 
-        <div className="grid grid-cols-2 gap-2 text-sm text-stone-700">
-          <Meta label={ja.places.travelRegion} value={classification?.travel_region} />
-          <Meta label={ja.places.area} value={classification?.area_label ?? classification?.ward} />
+        <div className="grid grid-cols-1 gap-2 text-sm text-stone-700">
+          <Meta label="地域" value={regionLabel} />
         </div>
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -112,6 +113,40 @@ function tagLabel(category: string, tag: string) {
   if (category === "Restaurant") return jaSceneTag(tag);
   if (category === "Fashion" || category === "Cafe") return jaCategoryTag(tag);
   return jaDisplay(tag);
+}
+
+function displayRegionLabel(place: PlaceRow, classification: Record<string, unknown> | null) {
+  const existing = String(classification?.region_filter_label ?? "").trim();
+  if (existing) return existing;
+  const fallback = classifyDisplayRegion({
+    country: stringOrNull(classification?.country),
+    prefecture: stringOrNull(classification?.prefecture),
+    city: stringOrNull(classification?.city),
+    ward: stringOrNull(classification?.ward),
+    area_label: stringOrNull(classification?.area_label),
+    travel_region: stringOrNull(classification?.travel_region),
+    address: stringOrNull(place.address),
+    raw_google_summary: rawGoogleSummary(place.raw_google)
+  }).region_filter_label;
+  return fallback === "未分類" ? classification?.travel_region ?? classification?.area_label ?? classification?.ward : fallback;
+}
+
+function rawGoogleSummary(rawGoogle: unknown) {
+  const raw = jsonRecord(rawGoogle);
+  if (!raw) return null;
+  const candidate = jsonRecord(raw.candidate_place);
+  const source = candidate ?? raw;
+  return {
+    displayName: source.displayName,
+    name: source.name,
+    formattedAddress: source.formattedAddress ?? source.formatted_address ?? null,
+    address: source.address ?? null
+  };
+}
+
+function stringOrNull(value: unknown) {
+  const text = String(value ?? "").trim();
+  return text ? text : null;
 }
 
 function Meta({ label, value }: { label: string; value: unknown }) {

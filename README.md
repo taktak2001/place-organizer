@@ -21,6 +21,7 @@ Googleマップの保存リストCSVをSupabaseに投入し、Webアプリで閲
 - `/places` は全体検索です。検索、カテゴリ、行ってみたいのシンプルな条件に絞っています。
 - `/categories` と `/category/[slug]` がカテゴリ別探索の中心です。
 - `/category/restaurant` では料理ジャンル、利用シーン、地域、価格帯で絞り込めます。料理ジャンルは `category_tags`、利用シーンは `scene_tags` として別軸で扱います。
+- カテゴリ別ページの地域フィルタはUI上「地域」に統一しています。内部の `travel_region` / `area_label` は保持しつつ、表示・フィルタ用に `region_group` / `region_filter_label` を使います。
 - `/category/art` では Museum / Gallery などのサブカテゴリで絞り込めます。
 - `/category/fashion` と `/category/cafe` では `category_tags` があるものだけタグフィルタできます。
 - Googleマップで開くボタンは元CSV Google Maps URLを優先します。
@@ -139,7 +140,8 @@ npm run classify:restaurant-cuisine -- --apply --force
 
 1. Place Organizer用のSupabase projectを作成
 2. `supabase/migrations/001_initial_place_organizer.sql` をSupabase SQL editorまたはCLIで実行
-3. `.env.local` にSupabase URLとservice role keyを設定
+3. 追加migrationがある場合は番号順に実行
+4. `.env.local` にSupabase URLとservice role keyを設定
 
 作成される主なテーブル:
 
@@ -149,6 +151,17 @@ npm run classify:restaurant-cuisine -- --apply --force
 - `import_batches`
 - `google_takeout_snapshots`
 - `google_takeout_snapshot_items`
+
+表示用地域フィルタを更新する場合:
+
+```bash
+# 先に supabase/migrations/006_add_display_region_fields.sql を実行
+npm run reclassify:display-regions -- --dry-run
+npm run reclassify:display-regions -- --apply
+npm run reclassify:display-regions -- --apply --only-missing
+```
+
+このscriptは、東京は細かいエリア、日本その他は主要都市・観光地、海外は都市単位の `region_filter_label` に丸めます。ログは件数だけを出し、個別の場所名・住所・URLは大量出力しません。
 
 ## CSV Setup
 

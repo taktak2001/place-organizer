@@ -19,6 +19,7 @@
     "enrich:places": "tsx scripts/enrich-places.ts",
     "reclassify:rules": "tsx scripts/reclassify-rules.ts",
     "reclassify:regions": "tsx scripts/reclassify-regions.ts",
+    "reclassify:display-regions": "tsx scripts/reclassify-display-regions.ts",
     "recheck:source-url": "tsx scripts/recheck-source-url.ts",
     "list:closed": "tsx scripts/list-closed-places.ts",
     "archive:closed": "tsx scripts/archive-closed-places.ts",

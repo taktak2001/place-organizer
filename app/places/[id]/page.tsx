@@ -3,6 +3,7 @@ import { ExternalLink } from "lucide-react";
 import { AIClassifyButton } from "@/components/AIClassifyButton";
 import { ArchiveActions } from "@/components/ArchiveActions";
 import { PlaceEditForm } from "@/components/PlaceEditForm";
+import { classifyDisplayRegion } from "@/lib/classification/display-region";
 import { ja, jaCategory, jaDisplay, jaGooglePlaceTypes, jaStatus } from "@/lib/i18n/ja";
 import { googleDisplayName, googleMapsUri, hasNameDifference, hasUrlDifference, isCandidateOnly, preferredGoogleMapsUrl, sourceGoogleMapsUrl, sourceSavedName } from "@/lib/import/source-fields";
 import { closedStatusLabel, detectClosedPlace } from "@/lib/places/closed";
@@ -50,6 +51,16 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
   const urlDiff = hasUrlDifference(sourceMapsUrl, enrichedMapsUrl);
   const candidateOnly = isCandidateOnly(place.raw_google);
   const closed = detectClosedPlace(place);
+  const displayRegion = classifyDisplayRegion({
+    country: stringOrNull(classification?.country),
+    prefecture: stringOrNull(classification?.prefecture),
+    city: stringOrNull(classification?.city),
+    ward: stringOrNull(classification?.ward),
+    area_label: stringOrNull(classification?.area_label),
+    travel_region: stringOrNull(classification?.travel_region),
+    address: stringOrNull(place.address),
+    raw_google_summary: rawGoogleSummary(place.raw_google)
+  });
 
   return (
     <div className="space-y-6">
@@ -102,6 +113,8 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
           ["AI分類日時", classification?.ai_classified_at]
         ]} />
         <InfoPanel title={ja.placeDetail.regionClassification} rows={[
+          ["表示地域グループ", jaDisplay(classification?.region_group ?? displayRegion.region_group)],
+          ["表示地域", jaDisplay(classification?.region_filter_label ?? displayRegion.region_filter_label)],
           [ja.placeDetail.country, jaDisplay(classification?.country)],
           [ja.placeDetail.prefecture, jaDisplay(classification?.prefecture)],
           [ja.placeDetail.city, jaDisplay(classification?.city)],
@@ -240,6 +253,19 @@ function googleSummaryRows(rawGoogle: unknown): Array<[string, unknown]> {
   ];
 }
 
+function rawGoogleSummary(rawGoogle: unknown) {
+  const raw = jsonRecord(rawGoogle);
+  if (!raw) return null;
+  const candidate = jsonRecord(raw.candidate_place);
+  const source = candidate ?? raw;
+  return {
+    displayName: source.displayName,
+    name: source.name,
+    formattedAddress: source.formattedAddress ?? source.formatted_address ?? null,
+    address: source.address ?? null
+  };
+}
+
 function ratingLabel(rating: unknown, total: unknown) {
   if (rating === null || rating === undefined || String(rating).trim() === "") return null;
   const totalText = total === null || total === undefined ? "" : ` (${String(total)}件)`;
@@ -259,6 +285,11 @@ function openingHoursSummary(source: Record<string, unknown>) {
 
 function jsonRecord(value: unknown) {
   return typeof value === "object" && value !== null ? value as Record<string, unknown> : null;
+}
+
+function stringOrNull(value: unknown) {
+  const text = String(value ?? "").trim();
+  return text ? text : null;
 }
 
 function googleTypeLabel(place: Record<string, unknown>) {
