@@ -81,7 +81,7 @@ export default async function HomePage() {
         </div>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {data.categoryCards.map((card) => (
-            <Link key={card.slug} href={`/category/${card.slug}`} className="rounded-lg border border-stone-300 bg-white p-4 hover:border-moss">
+            <Link key={card.slug} href={`/category/${card.slug}`} className="block rounded-lg border border-stone-300 bg-white p-4 transition active:scale-[0.99] active:bg-paper hover:border-moss hover:shadow-sm">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h3 className="text-xl font-semibold">{jaCategory(card.category)}</h3>

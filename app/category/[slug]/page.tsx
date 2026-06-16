@@ -31,6 +31,7 @@ export default async function CategoryPage({ params, searchParams }: { params: {
   const regionOptions = uniqueOptions(categoryPlaces.map((place) => firstRelated(place.place_classifications)?.travel_region));
   const areaOptions = uniqueOptions(categoryPlaces.map((place) => firstRelated(place.place_classifications)?.area_label));
   const wantCount = categoryPlaces.filter(isWantToGo).length;
+  const wantToggleHref = buildUrl(params.slug, { ...filters, want: !filters.want, page: 1 });
 
   return (
     <div className="space-y-5">
@@ -52,10 +53,14 @@ export default async function CategoryPage({ params, searchParams }: { params: {
               <input name="search" defaultValue={filters.search} className="h-12 w-full bg-transparent outline-none md:h-10" placeholder="場所名で検索" />
             </div>
           </label>
-          <label className="flex h-12 items-center gap-2 self-end rounded-md border border-stone-300 bg-paper px-3 text-sm font-semibold md:h-10">
-            <input type="checkbox" name="want" value="1" defaultChecked={filters.want} />
+          <Link
+            href={wantToggleHref}
+            aria-pressed={filters.want}
+            className={`flex h-12 items-center justify-center gap-2 self-end rounded-md border px-3 text-sm font-semibold transition active:scale-[0.99] md:h-10 ${filters.want ? "border-moss bg-moss text-white" : "border-stone-300 bg-paper text-ink hover:border-moss"}`}
+          >
+            <span aria-hidden="true">{filters.want ? "✓" : "□"}</span>
             行ってみたい
-          </label>
+          </Link>
           <button className="h-12 self-end rounded-md bg-ink px-5 text-sm font-semibold text-white md:h-10">適用</button>
         </div>
 

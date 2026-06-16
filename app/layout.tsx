@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { ja } from "@/lib/i18n/ja";
 import { isAdminEnabled } from "@/lib/supabase/server";
@@ -6,7 +6,24 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Place Organizer",
-  description: "Google Takeoutから保存場所を取り込み、分類・地域整理するアプリ"
+  description: "Google Takeoutから保存場所を取り込み、分類・地域整理するアプリ",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "Place Organizer",
+    statusBarStyle: "default"
+  },
+  icons: {
+    icon: "/icons/icon.svg",
+    apple: "/icons/icon.svg"
+  }
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#6f7f4f"
 };
 
 const navItems = [
@@ -56,7 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </details>
             </div>
           </header>
-          <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
+          <main className="mx-auto max-w-7xl px-4 pb-[calc(env(safe-area-inset-bottom)+96px)] pt-8">{children}</main>
         </div>
       </body>
     </html>

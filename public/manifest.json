@@ -1,0 +1,19 @@
+{
+  "name": "Place Organizer",
+  "short_name": "Places",
+  "description": "Googleマップの保存場所をカテゴリと地域で探すアプリ",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f4ed",
+  "theme_color": "#6f7f4f",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
