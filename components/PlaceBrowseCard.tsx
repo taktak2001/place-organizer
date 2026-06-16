@@ -3,7 +3,7 @@ import { ExternalLink } from "lucide-react";
 import { classifyDisplayRegion } from "@/lib/classification/display-region";
 import { ja, jaCategory, jaCategoryTag, jaDisplay, jaGooglePlaceTypes, jaSceneTag } from "@/lib/i18n/ja";
 import { googleMapsUri, isCandidateOnly, preferredGoogleMapsUrl } from "@/lib/import/source-fields";
-import { activeLinks, categoryTags, firstRelated, sceneTags, type PlaceRow } from "@/lib/places/browse";
+import { activeLinks, categoryTags, firstRelated, isWantToGo, sceneTags, type PlaceRow } from "@/lib/places/browse";
 
 type Props = {
   place: PlaceRow;
@@ -14,6 +14,7 @@ export function PlaceBrowseCard({ place, mode = "general" }: Props) {
   const classification = firstRelated(place.place_classifications);
   const category = String(classification?.main_category ?? "Other");
   const links = activeLinks(place.source_links);
+  const wantToGo = isWantToGo(place);
   const cuisineTags = category === "Restaurant" ? categoryTags(classification) : [];
   const restaurantSceneTags = category === "Restaurant" ? sceneTags(classification) : [];
   const tags = category === "Restaurant" ? [] : displayTags(category, classification);
@@ -35,15 +36,15 @@ export function PlaceBrowseCard({ place, mode = "general" }: Props) {
           <Link href={`/places/${String(place.id)}`} className="min-w-0 flex-1 text-lg font-semibold leading-snug text-ink hover:text-moss">
             {String(place.name)}
           </Link>
-          <span className="rounded-md bg-paper px-2 py-1 text-xs font-medium text-stone-700">{jaCategory(category)}</span>
+          {mode === "general" ? <span className="rounded-md bg-paper px-2 py-1 text-xs font-medium text-stone-700">{jaCategory(category)}</span> : null}
         </div>
 
         <div className="flex flex-wrap gap-1.5">
-          {links.map((link) => (
-            <span key={String(link.id ?? `${place.id}-${link.source_list_name}`)} className="rounded-md border border-stone-300 px-2 py-0.5 text-xs">
-              {jaDisplay(link.source_list_name)}
+          {wantToGo ? (
+            <span className="rounded-md border border-moss bg-white px-2 py-0.5 text-xs font-semibold text-moss">
+              行ってみたい
             </span>
-          ))}
+          ) : null}
           {cuisineTags.map((tag) => (
             <span key={`cuisine-${tag}`} className="rounded-md bg-paper px-2 py-0.5 text-xs font-medium text-stone-800">
               {jaCategoryTag(tag)}
@@ -55,7 +56,7 @@ export function PlaceBrowseCard({ place, mode = "general" }: Props) {
             </span>
           ))}
           {tags.map((tag) => (
-            <span key={tag} className="rounded-md bg-moss/10 px-2 py-0.5 text-xs font-medium text-moss">
+            <span key={tag} className={`rounded-md px-2 py-0.5 text-xs font-medium ${tagClass(category)}`}>
               {tagLabel(category, tag)}
             </span>
           ))}
@@ -80,6 +81,8 @@ export function PlaceBrowseCard({ place, mode = "general" }: Props) {
         <details className="rounded-md border border-stone-200 bg-paper px-3 py-2 text-sm text-stone-700">
           <summary className="cursor-pointer font-medium">詳細情報</summary>
           <div className="mt-2 grid gap-2 md:grid-cols-4">
+            <Meta label="元Googleマップリスト" value={sourceListLabel(links)} />
+            <Meta label="データ状態" value={place.enrichment_status} />
             <Meta label={ja.placeDetail.address} value={candidateOnly ? null : place.address} />
             <Meta label={ja.places.rating} value={candidateOnly ? null : ratingLabel(place.rating, place.user_ratings_total)} />
             <Meta label={ja.places.googleCategory} value={candidateOnly ? "補完候補" : jaGooglePlaceTypes(place.primary_type, place.types)} />
@@ -115,9 +118,21 @@ function tagLabel(category: string, tag: string) {
   return jaDisplay(tag);
 }
 
+function tagClass(category: string) {
+  if (category === "Art") return "bg-paper text-stone-800";
+  if (category === "Fashion" || category === "Cafe") return "bg-paper text-stone-800";
+  return "bg-moss/10 text-moss";
+}
+
+function sourceListLabel(links: Record<string, unknown>[]) {
+  const names = links.map((link) => String(link.source_list_name ?? "").trim()).filter(Boolean);
+  return names.length > 0 ? names.join(" / ") : null;
+}
+
 function displayRegionLabel(place: PlaceRow, classification: Record<string, unknown> | null) {
-  const existing = String(classification?.region_filter_label ?? "").trim();
-  if (existing) return existing;
+  const existing = stringOrNull(classification?.region_filter_label);
+  const composed = composeRegionLabel(classification, existing);
+  if (composed) return composed;
   const fallback = classifyDisplayRegion({
     country: stringOrNull(classification?.country),
     prefecture: stringOrNull(classification?.prefecture),
@@ -127,8 +142,27 @@ function displayRegionLabel(place: PlaceRow, classification: Record<string, unkn
     travel_region: stringOrNull(classification?.travel_region),
     address: stringOrNull(place.address),
     raw_google_summary: rawGoogleSummary(place.raw_google)
-  }).region_filter_label;
-  return fallback === "未分類" ? classification?.travel_region ?? classification?.area_label ?? classification?.ward : fallback;
+  });
+  return composeRegionLabel(classification, fallback.region_filter_label) ??
+    (fallback.region_filter_label === "未分類" ? classification?.travel_region ?? classification?.area_label ?? classification?.ward : fallback.region_filter_label);
+}
+
+function composeRegionLabel(classification: Record<string, unknown> | null, displayLabel: string | null) {
+  const group = stringOrNull(classification?.region_group);
+  const travel = stringOrNull(classification?.travel_region);
+  const area = stringOrNull(classification?.area_label ?? classification?.ward);
+  const label = displayLabel && displayLabel !== "未分類" ? displayLabel : null;
+
+  if (group === "Tokyo" || travel === "東京") return joinRegionParts("東京", label && !/^その他東京$/.test(label) ? label : area);
+  if (group === "Overseas") return label ?? travel ?? area;
+  if (travel && area) return joinRegionParts(travel, area);
+  return label ?? travel ?? area;
+}
+
+function joinRegionParts(primary: string, secondary: string | null | undefined) {
+  const second = String(secondary ?? "").trim();
+  if (!second || second === primary || second.includes(primary) || primary.includes(second)) return primary;
+  return `${primary}・${second}`;
 }
 
 function rawGoogleSummary(rawGoogle: unknown) {
