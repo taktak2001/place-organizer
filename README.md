@@ -27,6 +27,8 @@ Googleマップの保存リストCSVをSupabaseに投入し、Webアプリで閲
 
 `NEXT_PUBLIC_ENABLE_ADMIN=false` の本番公開環境では、レビュー、閉業候補、取込履歴、編集、アーカイブ、AI分類などの管理系導線は非表示になります。書き込みAPIも403になります。
 
+公開接続情報の読み込み確認には `/debug/env` を使います。このページは値そのものを表示せず、`NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_ANON_KEY` が読み込まれているかだけを表示します。
+
 ## Google Maps URL Source of Truth
 
 Place Organizerでは、Google Takeout / CSVに含まれる元Google Maps URLを正とします。

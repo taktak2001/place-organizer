@@ -1,12 +1,33 @@
 import { createClient } from "@supabase/supabase-js";
 
+export function getPublicSupabaseEnvStatus() {
+  const hasUrl = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const hasAnonKey = Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  return {
+    hasUrl,
+    hasAnonKey,
+    missing: [
+      hasUrl ? null : "NEXT_PUBLIC_SUPABASE_URL",
+      hasAnonKey ? null : "NEXT_PUBLIC_SUPABASE_ANON_KEY"
+    ].filter(Boolean) as string[],
+    enableAdmin: isAdminEnabled(),
+    vercelEnv: process.env.VERCEL_ENV ?? null,
+    nodeEnv: process.env.NODE_ENV ?? null
+  };
+}
+
+export function publicSupabaseEnvErrorMessage() {
+  const status = getPublicSupabaseEnvStatus();
+  if (status.missing.length === 0) return null;
+  return `Supabase公開接続情報が未設定です。missing ${status.missing.join(", ")}`;
+}
+
 export function getSupabaseRead() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anon) {
-    throw new Error("NEXT_PUBLIC_SUPABASE_URL または NEXT_PUBLIC_SUPABASE_ANON_KEY が未設定です。");
-  }
-  return createClient(url, anon, {
+  const envError = publicSupabaseEnvErrorMessage();
+  if (envError) throw new Error(envError);
+  return createClient(url!, anon!, {
     auth: { persistSession: false },
     global: {
       fetch: (input, init) => fetch(input, { ...init, cache: "no-store" })
