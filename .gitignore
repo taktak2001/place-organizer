@@ -1,0 +1,17 @@
+.next/
+node_modules/
+.env.local
+.DS_Store
+sample-data/
+data/derived/
+data/private/*
+!data/private/.gitkeep
+*.takeout.zip
+
+# Local env / private data
+.env.local
+.envrc
+data/private/
+data/derived/
+sample-data/
+*.takeout.zip

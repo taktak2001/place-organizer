@@ -1,0 +1,49 @@
+{
+  "name": "place-organizer",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "tsx test/import.test.ts",
+    "inspect:csv": "tsx scripts/inspect-takeout.ts",
+    "inspect:takeout": "tsx scripts/inspect-takeout.ts",
+    "inspect:private-data": "tsx scripts/inspect-private-data.ts",
+    "inspect:source-urls": "tsx scripts/inspect-source-urls.ts",
+    "inspect:classification-gaps": "tsx scripts/inspect-classification-gaps.ts",
+    "export:api-ready": "tsx scripts/export-api-ready-places.ts",
+    "normalize:place-ids": "tsx scripts/normalize-place-ids.ts",
+    "seed:places": "tsx scripts/seed-places.ts",
+    "enrich:places": "tsx scripts/enrich-places.ts",
+    "reclassify:rules": "tsx scripts/reclassify-rules.ts",
+    "reclassify:regions": "tsx scripts/reclassify-regions.ts",
+    "recheck:source-url": "tsx scripts/recheck-source-url.ts",
+    "list:closed": "tsx scripts/list-closed-places.ts",
+    "archive:closed": "tsx scripts/archive-closed-places.ts",
+    "classify:ai": "tsx scripts/ai-classify-places.ts",
+    "classify:restaurant-scenes": "tsx scripts/classify-restaurant-scenes.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "csv-parse": "^5.5.6",
+    "jszip": "^3.10.1",
+    "lucide-react": "^0.468.0",
+    "next": "14.2.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.5",
+    "postcss": "^8.4.39",
+    "tailwindcss": "^3.4.4",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3"
+  }
+}
