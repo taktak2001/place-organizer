@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { computeDiffPreview } from "@/lib/import/diff";
 import { duplicateCandidates, fileCounts, listCounts, sha256 } from "@/lib/import/normalize";
 import { parseImportFiles } from "@/lib/import/parsers";
-import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { getSupabaseRead } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -67,7 +67,7 @@ function getUploadedFiles(formData: FormData) {
 
 async function getPreviousSnapshot(fileHash: string) {
   try {
-    const supabase = getSupabaseAdmin();
+    const supabase = getSupabaseRead();
     const { data: sameHash } = await supabase
       .from("google_takeout_snapshots")
       .select("id")
@@ -90,7 +90,7 @@ async function getPreviousSnapshot(fileHash: string) {
   }
 }
 
-async function fetchSnapshotItems(supabase: ReturnType<typeof getSupabaseAdmin>, snapshotId: string) {
+async function fetchSnapshotItems(supabase: ReturnType<typeof getSupabaseRead>, snapshotId: string) {
   const rows: Array<{ normalized_key: string; source_list_name: string | null }> = [];
   for (let from = 0; ; from += 1000) {
     const { data, error } = await supabase

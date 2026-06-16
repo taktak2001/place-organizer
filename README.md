@@ -56,19 +56,35 @@ npm run recheck:source-url -- --dry-run --status all --include-confirmed
 
 `.env.example` を `.env.local` にコピーして設定します。
 
+Vercel公開閲覧用:
+
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_ENABLE_ADMIN=false
+```
+
+公開ページの `/`、`/places`、`/places/[id]`、`/closed` はSupabase anon keyで読み取ります。Vercel公開環境には `SUPABASE_SERVICE_ROLE_KEY` を入れない方針です。
+
+ローカル管理・script実行用:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_ENABLE_ADMIN=true
 SUPABASE_SERVICE_ROLE_KEY=
+ADMIN_TOKEN=
 GOOGLE_MAPS_API_KEY=
 OPENAI_API_KEY=
 OPENAI_MODEL=
 ```
 
-seedに必須:
+seed/enrich/recheck/classifyなどのローカルscriptに必須:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
+
+Web上の書き込みAPIは管理機能です。`NEXT_PUBLIC_ENABLE_ADMIN=false` の場合は403になります。`ADMIN_TOKEN` を設定した場合は、管理API呼び出しに `Authorization: Bearer <ADMIN_TOKEN>` または `x-admin-token` が必要です。
 
 `GOOGLE_MAPS_API_KEY` は将来のPlaces API補完用です。初期seedでは自動実行しません。
 `GOOGLE_MAPS_API_KEY` はサーバー側scriptでのみ使用し、クライアントには露出しません。

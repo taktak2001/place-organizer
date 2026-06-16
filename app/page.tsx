@@ -7,7 +7,7 @@ import { ja, jaSceneTag, jaStatus } from "@/lib/i18n/ja";
 import { reviewSourceUrlCandidate } from "@/lib/import/source-url-review";
 import { detectClosedPlace } from "@/lib/places/closed";
 import { safeQuery } from "@/lib/supabase/queries";
-import type { getSupabaseAdmin } from "@/lib/supabase/server";
+import { isAdminEnabled, type getSupabaseRead } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -48,6 +48,7 @@ type DashboardData = {
 };
 
 export default async function DashboardPage() {
+  const adminEnabled = isAdminEnabled();
   const { data, error } = await safeQuery<DashboardData>(
     { totalPlaces: 0, usablePlaces: 0, googleEnrichedPlaces: 0, sourceUrlConfirmedPlaces: 0, coordinatePointPlaces: 0, needsReviewPlaces: 0, errorPlaces: 0, totalSourceLinks: 0, activeSourceLinks: 0, pendingEnrichment: 0, sourceUrlConflictCount: 0, closedCandidateCount: 0, permanentlyClosedCount: 0, temporarilyClosedCount: 0, archivedPlaces: 0, aiClassifiedCount: 0, manualOverrideCount: 0, otherCategoryCount: 0, missingRegionCount: 0, missingRegionWithAddressCount: 0, otherWithHintCount: 0, otherWithoutHintCount: 0, missingRestaurantSceneCount: 0, latestBatch: null, byCategory: [], byList: [], byRegion: [], bySceneTag: [], byEnrichmentStatus: [], byApiStrategy: [], byRiskFlag: [] },
     async (supabase) => {
@@ -118,10 +119,12 @@ export default async function DashboardPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/review" className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-ink px-4 text-sm font-semibold text-white">
-            <ClipboardCheck className="h-4 w-4" />
-            {ja.dashboard.reviewPlaces}
-          </Link>
+          {adminEnabled ? (
+            <Link href="/review" className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-ink px-4 text-sm font-semibold text-white">
+              <ClipboardCheck className="h-4 w-4" />
+              {ja.dashboard.reviewPlaces}
+            </Link>
+          ) : null}
           <Link href="/places" className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-moss px-4 text-sm font-semibold text-white">
             <ListChecks className="h-4 w-4" />
             {ja.dashboard.browsePlaces}
@@ -184,8 +187,8 @@ export default async function DashboardPage() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
-        <QuickLink href="/review" title={ja.dashboard.reviewPlaces} />
         <QuickLink href="/closed" title={ja.dashboard.closedCandidates} />
+        {adminEnabled ? <QuickLink href="/review" title={ja.dashboard.reviewPlaces} /> : null}
         <QuickLink href="/places" title={ja.dashboard.browsePlaces} />
         <QuickLink href="/imports" title={ja.dashboard.importHistory} />
       </section>
@@ -232,7 +235,7 @@ function groupSceneTags(rows: ClassificationDashboardRow[]) {
 }
 
 async function fetchAllRows<T extends Record<string, unknown>>(
-  supabase: ReturnType<typeof getSupabaseAdmin>,
+  supabase: ReturnType<typeof getSupabaseRead>,
   table: string,
   columns: string,
   equals?: Record<string, unknown>
@@ -251,7 +254,7 @@ async function fetchAllRows<T extends Record<string, unknown>>(
   return rows;
 }
 
-async function fetchClosedDashboardRows(supabase: ReturnType<typeof getSupabaseAdmin>) {
+async function fetchClosedDashboardRows(supabase: ReturnType<typeof getSupabaseRead>) {
   try {
     return await fetchAllRows<ClosedDashboardRow>(supabase, "places", "business_status, raw_google, archive_reason, is_archived");
   } catch (error) {
@@ -263,7 +266,7 @@ async function fetchClosedDashboardRows(supabase: ReturnType<typeof getSupabaseA
   }
 }
 
-async function fetchClassificationDashboardRows(supabase: ReturnType<typeof getSupabaseAdmin>) {
+async function fetchClassificationDashboardRows(supabase: ReturnType<typeof getSupabaseRead>) {
   try {
     return await fetchAllRows<ClassificationDashboardRow>(supabase, "place_classifications", "main_category, travel_region, area_label, scene_tags, manual_override, classification_source");
   } catch (error) {
@@ -328,7 +331,7 @@ function hasSourceUrlConflict(place: SourceUrlConflictRow) {
   return reviewSourceUrlCandidate(place).reasons.length > 0;
 }
 
-async function fetchGapDashboardRows(supabase: ReturnType<typeof getSupabaseAdmin>) {
+async function fetchGapDashboardRows(supabase: ReturnType<typeof getSupabaseRead>) {
   const rows = await fetchAllRows<Record<string, unknown>>(
     supabase,
     "places",
@@ -451,6 +454,9 @@ function SetupNotice({ error }: { error: string }) {
 }
 
 function localizeError(error: string) {
+  if (error.includes("NEXT_PUBLIC_SUPABASE_URL または NEXT_PUBLIC_SUPABASE_ANON_KEY")) {
+    return ja.dashboard.missingPublicSupabaseEnv;
+  }
   if (error.includes("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY")) {
     return ja.dashboard.missingSupabaseEnv;
   }

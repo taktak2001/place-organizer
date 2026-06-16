@@ -7,10 +7,12 @@ import { ja, jaCategory, jaDisplay, jaGooglePlaceTypes, jaStatus } from "@/lib/i
 import { googleDisplayName, googleMapsUri, hasNameDifference, hasUrlDifference, isCandidateOnly, preferredGoogleMapsUrl, sourceGoogleMapsUrl, sourceSavedName } from "@/lib/import/source-fields";
 import { closedStatusLabel, detectClosedPlace } from "@/lib/places/closed";
 import { safeQuery } from "@/lib/supabase/queries";
+import { isAdminEnabled } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function PlaceDetailPage({ params }: { params: { id: string } }) {
+  const adminEnabled = isAdminEnabled();
   const { data: place, error } = await safeQuery<Record<string, unknown> | null>(null, async (supabase) => {
     const { data, error: queryError } = await supabase
       .from("places")
@@ -130,15 +132,17 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
         ]} />
       </section>
 
-      <section className="rounded-lg border border-stone-300 bg-white p-4">
-        <h2 className="text-base font-semibold">{ja.closed.title}</h2>
-        <p className="mt-2 text-sm text-stone-700">
-          閉業や誤登録の整理は論理アーカイブで行います。元CSV由来のGoogle Maps URLとリスト所属は保持されます。
-        </p>
-        <div className="mt-4">
-          <ArchiveActions placeId={params.id} closedStatus={closed?.status ?? null} isArchived={place.is_archived === true} />
-        </div>
-      </section>
+      {adminEnabled ? (
+        <section className="rounded-lg border border-stone-300 bg-white p-4">
+          <h2 className="text-base font-semibold">{ja.closed.title}</h2>
+          <p className="mt-2 text-sm text-stone-700">
+            閉業や誤登録の整理は論理アーカイブで行います。元CSV由来のGoogle Maps URLとリスト所属は保持されます。
+          </p>
+          <div className="mt-4">
+            <ArchiveActions placeId={params.id} closedStatus={closed?.status ?? null} isArchived={place.is_archived === true} />
+          </div>
+        </section>
+      ) : null}
 
       <section className="rounded-lg border border-stone-300 bg-white p-4">
         <h2 className="text-base font-semibold">{ja.placeDetail.rawGoogleSummary}</h2>
@@ -171,17 +175,19 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
         </div>
       </section>
 
-      <section>
-        <h2 className="mb-3 text-base font-semibold">{ja.placeDetail.editClassification}</h2>
-        <div className="mb-3 rounded-lg border border-stone-300 bg-white p-4">
-          <h3 className="text-sm font-semibold">AI分類</h3>
-          <p className="mt-1 text-sm text-stone-700">AI分類は補助です。手動分類が優先されている場合は上書きしません。</p>
-          <div className="mt-3">
-            <AIClassifyButton placeId={params.id} manualOverride={classification?.manual_override === true} />
+      {adminEnabled ? (
+        <section>
+          <h2 className="mb-3 text-base font-semibold">{ja.placeDetail.editClassification}</h2>
+          <div className="mb-3 rounded-lg border border-stone-300 bg-white p-4">
+            <h3 className="text-sm font-semibold">AI分類</h3>
+            <p className="mt-1 text-sm text-stone-700">AI分類は補助です。手動分類が優先されている場合は上書きしません。</p>
+            <div className="mt-3">
+              <AIClassifyButton placeId={params.id} manualOverride={classification?.manual_override === true} />
+            </div>
           </div>
-        </div>
-        <PlaceEditForm placeId={params.id} place={place} classification={classification} />
-      </section>
+          <PlaceEditForm placeId={params.id} place={place} classification={classification} />
+        </section>
+      ) : null}
 
       <section className="rounded-lg border border-stone-300 bg-white p-4">
         <h2 className="text-base font-semibold">{ja.placeDetail.rawImport}</h2>

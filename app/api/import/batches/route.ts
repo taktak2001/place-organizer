@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { getSupabaseRead } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const supabase = getSupabaseAdmin();
+    const supabase = getSupabaseRead();
     const { data, error } = await supabase
       .from("import_batches")
       .select("*")

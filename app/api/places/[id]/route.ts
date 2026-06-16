@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { AdminAuthError, assertAdminRequest, getSupabaseAdmin, getSupabaseRead } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
 export async function GET(_request: Request, { params }: { params: { id: string } }) {
   try {
-    const supabase = getSupabaseAdmin();
+    const supabase = getSupabaseRead();
     const { data, error } = await supabase
       .from("places")
       .select("*, place_classifications(*), source_links(*)")
@@ -20,6 +20,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
 
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   try {
+    assertAdminRequest(request);
     const body = await request.json();
     const supabase = getSupabaseAdmin();
     const placePatch = {
@@ -62,6 +63,9 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     }
     return NextResponse.json({ ok: true });
   } catch (error) {
+    if (error instanceof AdminAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

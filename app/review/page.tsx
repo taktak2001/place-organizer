@@ -3,7 +3,7 @@ import { ReviewClient, type ReviewPlace } from "@/components/ReviewClient";
 import { ja } from "@/lib/i18n/ja";
 import { reviewSourceUrlCandidate } from "@/lib/import/source-url-review";
 import { safeQuery } from "@/lib/supabase/queries";
-import type { getSupabaseAdmin } from "@/lib/supabase/server";
+import { isAdminEnabled, type getSupabaseRead } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -21,6 +21,18 @@ type ReviewData = {
 };
 
 export default async function ReviewPage({ searchParams }: { searchParams: SearchParams }) {
+  if (!isAdminEnabled()) {
+    return (
+      <div className="rounded-lg border border-stone-300 bg-white p-6">
+        <h1 className="text-xl font-semibold">{ja.review.title}</h1>
+        <p className="mt-2 text-sm text-stone-700">公開環境ではレビュー操作を無効にしています。</p>
+        <Link href="/places" className="mt-4 inline-flex h-10 items-center rounded-md bg-moss px-4 text-sm font-semibold text-white">
+          {ja.dashboard.browsePlaces}
+        </Link>
+      </div>
+    );
+  }
+
   const status = normalizeStatus(valueOf(searchParams.status));
   const mode = valueOf(searchParams.mode) === "list" ? "list" : "card";
   const page = Math.max(1, Number(valueOf(searchParams.page)) || 1);
@@ -67,7 +79,7 @@ export default async function ReviewPage({ searchParams }: { searchParams: Searc
   );
 }
 
-async function fetchCounts(supabase: ReturnType<typeof getSupabaseAdmin>) {
+async function fetchCounts(supabase: ReturnType<typeof getSupabaseRead>) {
   const entries = await Promise.all(REVIEW_STATUSES.map(async (status) => {
     if (status === "source_conflict") {
       return [status, (await fetchSourceConflictPlaces(supabase)).length] as const;
@@ -82,7 +94,7 @@ async function fetchCounts(supabase: ReturnType<typeof getSupabaseAdmin>) {
   return Object.fromEntries(entries) as Record<ReviewStatus, number>;
 }
 
-async function fetchReviewPlaces(supabase: ReturnType<typeof getSupabaseAdmin>, status: ReviewStatus, page: number) {
+async function fetchReviewPlaces(supabase: ReturnType<typeof getSupabaseRead>, status: ReviewStatus, page: number) {
   if (status === "source_conflict") {
     return fetchSourceConflictPlaces(supabase, page);
   }
@@ -105,7 +117,7 @@ function emptyCounts() {
   return { place_id_candidate: 0, source_conflict: 0, needs_review: 0, not_found: 0, error: 0, coordinate_point: 0, source_url_confirmed: 0 };
 }
 
-async function countPlaceIdCandidates(supabase: ReturnType<typeof getSupabaseAdmin>) {
+async function countPlaceIdCandidates(supabase: ReturnType<typeof getSupabaseRead>) {
   try {
     const { count, error } = await supabase
       .from("places")
@@ -120,7 +132,7 @@ async function countPlaceIdCandidates(supabase: ReturnType<typeof getSupabaseAdm
   }
 }
 
-async function fetchPlaceIdCandidatePlaces(supabase: ReturnType<typeof getSupabaseAdmin>, page: number) {
+async function fetchPlaceIdCandidatePlaces(supabase: ReturnType<typeof getSupabaseRead>, page: number) {
   const from = (page - 1) * PAGE_SIZE;
   try {
     const { data, error } = await supabase
@@ -138,7 +150,7 @@ async function fetchPlaceIdCandidatePlaces(supabase: ReturnType<typeof getSupaba
   }
 }
 
-async function fetchSourceConflictPlaces(supabase: ReturnType<typeof getSupabaseAdmin>, page?: number) {
+async function fetchSourceConflictPlaces(supabase: ReturnType<typeof getSupabaseRead>, page?: number) {
   const rows: ReviewPlace[] = [];
   for (let from = 0; ; from += 1000) {
     const { data, error } = await supabase

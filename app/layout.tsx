@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ja } from "@/lib/i18n/ja";
+import { isAdminEnabled } from "@/lib/supabase/server";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,6 +18,7 @@ const navItems = [
 ];
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const items = navItems.filter((item) => item.href !== "/review" || isAdminEnabled());
   return (
     <html lang="ja">
       <body>
@@ -27,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 Place Organizer
               </Link>
               <nav className="flex gap-2 text-sm">
-                {navItems.map((item) => (
+                {items.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}

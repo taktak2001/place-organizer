@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { classifyPlace } from "@/lib/classification/category";
 import { computeDiffPreview } from "@/lib/import/diff";
 import { duplicateCandidates } from "@/lib/import/normalize";
-import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { AdminAuthError, assertAdminRequest, getSupabaseAdmin } from "@/lib/supabase/server";
 import type { NormalizedImportItem } from "@/types/import";
 
 export const runtime = "nodejs";
@@ -17,6 +17,7 @@ type CommitPayload = {
 
 export async function POST(request: Request) {
   try {
+    assertAdminRequest(request);
     const payload = (await request.json()) as CommitPayload;
     if (!payload.file_hash || !payload.filename || !Array.isArray(payload.items)) {
       return NextResponse.json({ error: "インポート内容が不正です。" }, { status: 400 });
@@ -173,6 +174,9 @@ export async function POST(request: Request) {
       diff
     });
   } catch (error) {
+    if (error instanceof AdminAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

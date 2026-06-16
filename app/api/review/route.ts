@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { parseGoogleMapsUrl } from "@/lib/import/google-maps-url";
 import { sourceGoogleMapsUrl } from "@/lib/import/source-fields";
-import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { AdminAuthError, assertAdminRequest, getSupabaseAdmin } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,6 +12,7 @@ const ALLOWED_STATUSES = new Set(["enriched", "not_found", "pending_enrichment",
 
 export async function PATCH(request: Request) {
   try {
+    assertAdminRequest(request);
     const body = await request.json();
     const ids = Array.isArray(body.ids) ? body.ids.map(String).filter(Boolean) : [];
     const status = String(body.status ?? "");
@@ -142,6 +143,9 @@ export async function PATCH(request: Request) {
       { headers: { "Cache-Control": "no-store" } }
     );
   } catch (error) {
+    if (error instanceof AdminAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

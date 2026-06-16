@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { getSupabaseRead } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const supabase = getSupabaseAdmin();
+    const supabase = getSupabaseRead();
     let query = supabase.from("places").select(
       `
       *,

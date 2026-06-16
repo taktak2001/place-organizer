@@ -5,7 +5,7 @@ import { ja, jaCategory, jaDisplay, jaGooglePlaceTypes } from "@/lib/i18n/ja";
 import { googleDisplayName, preferredGoogleMapsUrl, sourceSavedName } from "@/lib/import/source-fields";
 import { closedStatusLabel, detectClosedPlace, type ClosedStatus } from "@/lib/places/closed";
 import { safeQuery } from "@/lib/supabase/queries";
-import type { getSupabaseAdmin } from "@/lib/supabase/server";
+import { isAdminEnabled, type getSupabaseRead } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -18,6 +18,7 @@ type SearchParams = Record<string, string | string[] | undefined>;
 type PlaceRow = Record<string, unknown>;
 
 export default async function ClosedPage({ searchParams }: { searchParams: SearchParams }) {
+  const adminEnabled = isAdminEnabled();
   const status = normalizeStatus(valueOf(searchParams.status));
   const { data, error } = await safeQuery<PlaceRow[]>([], async (supabase) => fetchPlaces(supabase));
   const rows = data
@@ -61,7 +62,7 @@ export default async function ClosedPage({ searchParams }: { searchParams: Searc
 
       <div className="grid gap-3">
         {rows.map(({ place, closed }) => (
-          <ClosedCard key={String(place.id)} place={place} closedStatus={closed?.status ?? null} />
+          <ClosedCard key={String(place.id)} place={place} closedStatus={closed?.status ?? null} adminEnabled={adminEnabled} />
         ))}
         {rows.length === 0 ? <div className="rounded-lg border border-stone-300 bg-white p-6 text-sm text-stone-600">{ja.closed.noTargets}</div> : null}
       </div>
@@ -69,7 +70,7 @@ export default async function ClosedPage({ searchParams }: { searchParams: Searc
   );
 }
 
-async function fetchPlaces(supabase: ReturnType<typeof getSupabaseAdmin>) {
+async function fetchPlaces(supabase: ReturnType<typeof getSupabaseRead>) {
   const rows: PlaceRow[] = [];
   for (let from = 0; ; from += 1000) {
     const { data, error } = await supabase
@@ -83,7 +84,7 @@ async function fetchPlaces(supabase: ReturnType<typeof getSupabaseAdmin>) {
   return rows;
 }
 
-function ClosedCard({ place, closedStatus }: { place: PlaceRow; closedStatus: ClosedStatus | null }) {
+function ClosedCard({ place, closedStatus, adminEnabled }: { place: PlaceRow; closedStatus: ClosedStatus | null; adminEnabled: boolean }) {
   const classification = firstRelated(place.place_classifications);
   const links = activeLinks(place.source_links);
   const sourceName = sourceSavedName(place.raw_import, place.name);
@@ -130,7 +131,7 @@ function ClosedCard({ place, closedStatus }: { place: PlaceRow; closedStatus: Cl
           <Link href={`/places/${String(place.id)}`} className="inline-flex h-12 items-center justify-center rounded-md border border-stone-300 px-4 text-sm font-medium lg:h-10">
             {ja.places.viewDetail}
           </Link>
-          <ArchiveActions placeId={String(place.id)} closedStatus={closedStatus} isArchived={place.is_archived === true} compact />
+          {adminEnabled ? <ArchiveActions placeId={String(place.id)} closedStatus={closedStatus} isArchived={place.is_archived === true} compact /> : null}
         </div>
       </div>
     </article>

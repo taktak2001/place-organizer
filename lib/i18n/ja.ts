@@ -43,8 +43,9 @@ export const ja = {
     seedGuideDescription: "通常はWeb画面からアップロードせず、プロジェクト内のCSVをseed scriptでSupabaseに投入します。",
     seedGuideSteps: ["data/private/ にCSVを置く", "npm run inspect:private-data", "npm run seed:places"],
     supabaseDisconnected:
-      "Supabaseに接続されていません。`.env.local` に `NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_ANON_KEY`、`SUPABASE_SERVICE_ROLE_KEY` を設定し、migrationを実行してください。",
-    missingSupabaseEnv: "エラー: NEXT_PUBLIC_SUPABASE_URL または SUPABASE_SERVICE_ROLE_KEY が未設定です。"
+      "Supabase公開接続情報が未設定です。`NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_ANON_KEY` を設定してください。",
+    missingSupabaseEnv: "エラー: NEXT_PUBLIC_SUPABASE_URL または SUPABASE_SERVICE_ROLE_KEY が未設定です。",
+    missingPublicSupabaseEnv: "エラー: NEXT_PUBLIC_SUPABASE_URL または NEXT_PUBLIC_SUPABASE_ANON_KEY が未設定です。"
   },
   closed: {
     eyebrow: "閉業候補",
@@ -269,9 +270,27 @@ export const ja = {
     Hotel: "ホテル",
     Bath: "風呂・サウナ",
     Hospital: "病院",
-    Life: "生活",
+    Life: "ライフ",
     Other: "その他",
     Unknown: "未分類"
+  },
+  categoryTag: {
+    "Work-friendly": "作業向き",
+    Relax: "ゆっくり",
+    Coffee: "コーヒー",
+    Sweets: "スイーツ",
+    Bakery: "ベーカリー",
+    Spacious: "広め",
+    Takeout: "テイクアウト",
+    Minimal: "ミニマル",
+    Mode: "モード",
+    Street: "ストリート",
+    Vintage: "ヴィンテージ",
+    Shoes: "靴",
+    Jewelry: "ジュエリー",
+    "Select Shop": "セレクトショップ",
+    "Department Store": "百貨店",
+    Other: "その他"
   },
   sceneTag: {
     Date: "デート",
@@ -325,6 +344,11 @@ export function jaCategory(value: unknown) {
 export function jaSceneTag(value: unknown) {
   const key = String(value ?? "");
   return ja.sceneTag[key as keyof typeof ja.sceneTag] ?? jaDisplay(value);
+}
+
+export function jaCategoryTag(value: unknown) {
+  const key = String(value ?? "");
+  return ja.categoryTag[key as keyof typeof ja.categoryTag] ?? jaDisplay(value);
 }
 
 export function jaDisplay(value: unknown) {

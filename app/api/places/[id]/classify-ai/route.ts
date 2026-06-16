@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { buildAIClassificationInput, classificationToDbPayload, classifyPlaceWithAI } from "@/lib/classification/ai";
-import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { AdminAuthError, assertAdminRequest, getSupabaseAdmin } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
+    assertAdminRequest(request);
     const body = await request.json().catch(() => ({}));
     const apply = body.apply === true;
     const force = body.force === true;
@@ -50,6 +51,9 @@ export async function POST(request: Request, { params }: { params: { id: string 
       classification: result
     });
   } catch (error) {
+    if (error instanceof AdminAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
