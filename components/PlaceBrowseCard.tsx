@@ -4,7 +4,7 @@ import { CategoryIcon } from "@/components/CategoryIcon";
 import { classifyDisplayRegion } from "@/lib/classification/display-region";
 import { ja, jaCategory, jaCategoryTag, jaDisplay, jaGooglePlaceTypes, jaSceneTag } from "@/lib/i18n/ja";
 import { googleMapsUri, isCandidateOnly, preferredGoogleMapsUrl } from "@/lib/import/source-fields";
-import { activeLinks, categoryTags, firstRelated, isWantToGo, priceLevelLabel, sceneTags, type PlaceRow } from "@/lib/places/browse";
+import { activeLinks, categoryTags, firstRelated, isWantToGo, restaurantPriceBand, restaurantPriceBandLabel, sceneTags, type PlaceRow } from "@/lib/places/browse";
 
 type Props = {
   place: PlaceRow;
@@ -30,7 +30,7 @@ export function PlaceBrowseCard({ place, mode = "general" }: Props) {
   const candidateHref = googleMapsUri(place.raw_google);
   const regionLabel = displayRegionLabel(place, classification);
   const restaurantRegionTags = category === "Restaurant" ? [regionLabel].map((value) => String(value ?? "").trim()).filter((value) => value && value !== "未分類") : [];
-  const price = category === "Restaurant" && place.price_level ? priceLevelLabel(place.price_level) : null;
+  const price = category === "Restaurant" ? restaurantPriceBandLabel(restaurantPriceBand(place, classification)) : null;
 
   return (
     <article className="rounded-lg border border-line bg-white p-3 shadow-sm md:p-4">

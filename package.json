@@ -13,6 +13,7 @@
     "inspect:private-data": "tsx scripts/inspect-private-data.ts",
     "inspect:source-urls": "tsx scripts/inspect-source-urls.ts",
     "inspect:classification-gaps": "tsx scripts/inspect-classification-gaps.ts",
+    "inspect:restaurant-quality": "tsx scripts/inspect-restaurant-quality.ts",
     "export:api-ready": "tsx scripts/export-api-ready-places.ts",
     "normalize:place-ids": "tsx scripts/normalize-place-ids.ts",
     "seed:places": "tsx scripts/seed-places.ts",

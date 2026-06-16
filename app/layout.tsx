@@ -31,13 +31,14 @@ const navItems = [
   { href: "/places", label: ja.nav.places },
   { href: "/categories", label: "カテゴリ一覧" },
   { href: "/review", label: ja.nav.review },
+  { href: "/restaurant-review", label: "Restaurantレビュー" },
   { href: "/closed", label: ja.nav.closed },
   { href: "/imports", label: ja.nav.imports }
 ];
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const adminEnabled = isAdminEnabled();
-  const items = navItems.filter((item) => adminEnabled || !["/review", "/closed", "/imports"].includes(item.href));
+  const items = navItems.filter((item) => adminEnabled || !["/review", "/restaurant-review", "/closed", "/imports"].includes(item.href));
   return (
     <html lang="ja">
       <body>

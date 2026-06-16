@@ -136,6 +136,17 @@ npm run classify:restaurant-cuisine -- --apply --force
 - `manual_override=true` の分類は通常上書きしません。
 - Googleマップで開くボタンは引き続き元CSV Google Maps URLを優先します。
 
+Restaurant分類の品質確認は専用レビュー画面で行います。
+
+```bash
+npm run inspect:restaurant-quality
+```
+
+- `supabase/migrations/007_add_restaurant_review_fields.sql` を実行すると、Restaurantレビュー用の状態、メモ欄、価格帯が追加されます。
+- `/restaurant-review` は管理環境専用です。`NEXT_PUBLIC_ENABLE_ADMIN=false` の公開環境では操作できません。
+- `inspect:restaurant-quality` は料理ジャンル、利用シーン、地域、価格帯などの欠落を件数中心で検査します。個別の店名・住所・URLは出力しません。
+- 管理API `/api/restaurant-review/[id]` はRestaurant分類の保存、要確認、レストランではない判定に使います。
+
 ## Supabase Setup
 
 1. Place Organizer用のSupabase projectを作成
@@ -374,6 +385,7 @@ Open `http://localhost:3000`.
 - `/` ダッシュボード
 - `/places` 場所一覧
 - `/places/[id]` 場所詳細・分類編集
+- `/restaurant-review` Restaurant分類レビュー（管理環境のみ）
 - `/imports` 取込履歴
 - `/import` 開発者向け手動アップロード
 
@@ -386,6 +398,7 @@ npm test
 npm run inspect:private-data
 npm run enrich:places -- --dry-run --limit 10
 npm run normalize:place-ids -- --dry-run --limit 20
+npm run inspect:restaurant-quality
 ```
 
 Supabase envが設定されている場合:

@@ -6,7 +6,7 @@ import { PlaceBrowseCard } from "@/components/PlaceBrowseCard";
 import { classifyDisplayRegion, REGION_FILTER_SECTIONS } from "@/lib/classification/display-region";
 import { RESTAURANT_CUISINE_TAGS } from "@/lib/classification/restaurant-cuisine";
 import { jaCategory, jaCategoryTag, jaDisplay, jaSceneTag } from "@/lib/i18n/ja";
-import { categoryFromSlug, categoryTags, fetchAllPlaces, firstRelated, isWantToGo, matchesArchive, matchesText, PAGE_SIZE, priceLevelLabel, sceneTags, sortRecommended, type PlaceRow } from "@/lib/places/browse";
+import { categoryFromSlug, categoryTags, fetchAllPlaces, firstRelated, isWantToGo, matchesArchive, matchesText, PAGE_SIZE, RESTAURANT_PRICE_BANDS, restaurantPriceBand, restaurantPriceBandLabel, sceneTags, sortRecommended, type PlaceRow } from "@/lib/places/browse";
 import { safeQuery } from "@/lib/supabase/queries";
 
 export const dynamic = "force-dynamic";
@@ -84,7 +84,7 @@ export default async function CategoryPage({ params, searchParams }: { params: {
             {category === "Fashion" ? <CheckboxGroup name="category_tags" label="ジャンル" values={FASHION_TAGS} selected={filters.category_tags} labeler={jaCategoryTag} /> : null}
             {category === "Cafe" ? <CheckboxGroup name="category_tags" label="タグ" values={CAFE_TAGS} selected={filters.category_tags} labeler={jaCategoryTag} /> : null}
             <RegionChipGroup selected={filters.region_filter_label} availableLabels={availableRegionLabels} />
-            {category === "Restaurant" ? <SelectFilter name="price_level" label="価格帯" value={filters.price_level} options={["1", "2", "3", "4"]} labeler={priceLevelLabel} /> : null}
+            {category === "Restaurant" ? <SelectFilter name="price_level" label="価格帯" value={filters.price_level} options={[...RESTAURANT_PRICE_BANDS]} labeler={restaurantPriceBandLabel} /> : null}
           </div>
         </details>
       </form>
@@ -121,7 +121,7 @@ function placeMatches(place: PlaceRow, category: string, filters: ReturnType<typ
   return matchesText(filters.search, [place.name, place.address, classification?.area_label, classification?.travel_region].join(" ")) &&
     (!filters.want || isWantToGo(place)) &&
     (filters.region_filter_label.length === 0 || filters.region_filter_label.includes(displayRegionLabel(place))) &&
-    (filters.price_level === "" || String(place.price_level ?? "") === filters.price_level) &&
+    (filters.price_level === "" || restaurantPriceBand(place, classification) === filters.price_level) &&
     (filters.scene_tags.length === 0 || filters.scene_tags.some((tag) => sceneTags(classification).includes(tag))) &&
     (filters.sub_category.length === 0 || filters.sub_category.includes(String(classification?.sub_category ?? ""))) &&
     (filters.category_tags.length === 0 || filters.category_tags.some((tag) => categoryTags(classification).includes(tag))) &&

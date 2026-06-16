@@ -105,3 +105,28 @@ export function priceLevelLabel(value: unknown) {
   if (value === null || value === undefined || String(value).trim() === "") return "未設定";
   return "¥".repeat(Math.max(1, Number(value) || 1));
 }
+
+export const RESTAURANT_PRICE_BANDS = ["cheap", "normal", "high", "luxury", "unknown"] as const;
+
+export function restaurantPriceBand(place: PlaceRow, classification: Record<string, unknown> | null) {
+  const explicit = String(classification?.restaurant_price_band ?? "").trim();
+  if (RESTAURANT_PRICE_BANDS.includes(explicit as typeof RESTAURANT_PRICE_BANDS[number])) return explicit;
+  const level = Number(place.price_level);
+  if (level === 1) return "cheap";
+  if (level === 2) return "normal";
+  if (level === 3) return "high";
+  if (level >= 4) return "luxury";
+  return "unknown";
+}
+
+export function restaurantPriceBandLabel(value: unknown) {
+  const key = String(value ?? "unknown");
+  const labels: Record<string, string> = {
+    cheap: "安い",
+    normal: "普通",
+    high: "高級",
+    luxury: "かなり高級",
+    unknown: "不明"
+  };
+  return labels[key] ?? "不明";
+}
